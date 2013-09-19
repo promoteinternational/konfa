@@ -1,0 +1,3 @@
+---
+my_var: read from the yaml file
+_non_existant_test_variable:   this should break everything
