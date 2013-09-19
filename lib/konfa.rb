@@ -45,16 +45,6 @@ module Konfa
         # exception if it fails to read the file. We'll handle it like this for now
         # load_file just returns "false" if it fails
 
-        # NOTE ON BOOLEANS: Ruby's YAML implementation will cast the words
-        #   yes, true, on, off, false, no
-        # into a Boolean. This applies to both keys and values. Because Konfa
-        # assumes that all values are strings, values are always converted to
-        # a String. This means that the word yes will result in the string "true".
-        # To avoid this, please quote the word in your YAML source. Like so:
-        #
-        #  my_key: yes     # Will result in AKonfaClass.get(:my_key) => "true"
-        #  my_key: 'yes'   # Will result in AKonfaClass.get(:my_key) => "yes"
-
         yaml_data = YAML.load_file(path)
         yaml_data.each do |variable, value|
           raise UnsupportedVariableError.new(variable) unless @@variables.has_key? variable.to_sym
