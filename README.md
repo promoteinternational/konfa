@@ -71,10 +71,10 @@ The ```with_config``` method is useful for testing. It can be used like this
 MyAppConfig.set(:var, 'off')
 
 MyAppConfig.with_config(:var => 'on') do
-    MyAppConfig.get(:var) # => "off" inside this block
+    MyAppConfig.get(:var) # => "on" inside this block
 end
 
-MyAppConfig.get(:var) # => "on" again
+MyAppConfig.get(:var) # => "off" again
 ```
 
 Original configuration values will be restored even if the block raises an exception. 
