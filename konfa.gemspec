@@ -3,7 +3,7 @@ Gem::Specification.new do |s|
   s.version     = '0.0.1'
   s.date        = '2013-09-20'
   s.summary     = "Application configuration"
-  s.description = "A simple hello world gem"
+  s.description = "Helps you avoid common pitfalls when dealing with app config"
   s.authors     = ["Gunnar Hansson", "Avidity"]
   s.email       = 'code@avidiy.se'
   s.files       = ["lib/konfa.rb"]
