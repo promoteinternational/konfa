@@ -128,7 +128,7 @@ my_key_2: 'yes'   # Will result in Konfa.get(:my_key) => "yes"
 
 after_initialize
 ----------------
-Your subclass may implement a method called ```after_initialize``` that will be called immediately after Konfa has 
+Your subclass may implement a class method called ```after_initialize``` that will be called immediately after Konfa has 
 been initialized with configuration values. This is useful if you for example want to configure logging or something 
 else when you have to be sure that you have all config values.
 
@@ -139,7 +139,7 @@ class MyAppConfig < Konfa::Base
   @@variables = {
     log_file: nil,
   }
-  def after_initialize
+  def self.after_initialize
     Logger.file = get(:log_file)
   end
 end
