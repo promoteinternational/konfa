@@ -47,13 +47,13 @@ Values
 ------
 For the sake of simplicity, values are always converted to, and treated as, strings. The rationale behind this is to be able to initialize configuration values from sources that does not support specific datatypes (such as the environment)
 
-Complex values, such as arrays or hashes, are not supported out of the box, but you could impelement it like this for example:
+Complex values, such as arrays or hashes, are not supported out of the box, but can easily be implemented if needed:
 
 ```ruby
 class MyAppConfig < Konfa::Base
   def self.allowed_variables
     {
-      :numbers => 'one,two,three'
+      :numbers => 'one, two, three'
     }
   end
 
@@ -61,8 +61,6 @@ class MyAppConfig < Konfa::Base
     get(key).split(/\s*,\s*/)
   end
 end
-
-# Later on
 
 MyAppConfig.get(:numbers)     => 'one,two,three'
 MyAppConfig.as_list(:numbers) => ['one','two','three']
@@ -88,9 +86,7 @@ Settings values
 Konfa does not provide an interface to set values. But if you *really* want to, you can do
 
 ```ruby
-
   MyAppConfig.send(:store, :key, 'value')
-
 ```
 
 This could be useful tests and, but you really shouldn't set config values from within the application.
@@ -112,8 +108,8 @@ MyAppConfig.get(:var) # => "off" again
 
 Original configuration values will be restored even if the block raises an exception.
 
-Values from environment
------------------------
+Populate with values from environment
+-------------------------------------
 The ```initialize_from_env``` method populates values from the environment. Konfa will only import variables with a specific prefix to avoid collisions with existing variables.
 
 ```ruby
@@ -145,11 +141,10 @@ $ export MYAPP_LANG=pt
 $ export LANG=en_US
 $ ruby myapp.rb
 I speak pt and I will not show stuff
-
 ```
 
-Values from YAML
-----------------
+Populate with values from YAML
+------------------------------
 The ```initialize_from_yaml``` will read values from the given yaml file. Only key/values are supported.
 
 *Note on YAML and booleans*
