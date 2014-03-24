@@ -16,24 +16,18 @@ class MyKonfa < Konfa::Base
     end
   end
 end
+require 'debugger'
 
-class MyKonfaWithFeatures < Konfa::Base
+class MyOtherKonfa < Konfa::Base
   class << self
-    def features_prefix
-      'feat'
+    def env_variable_prefix
+      'OTHER_PREF_'
     end
 
     def allowed_variables
       {
-        :my_var => 'the variable',
-      }
-    end
-
-    def allowed_features
-      {
-        :enabled_feature => nil,
-        :disabled_feature => nil,
-        :default_feature => 'true'
+        :my_var         => 'other default',
+        :default_is_nil => 'no it is not'
       }
     end
   end
@@ -154,7 +148,7 @@ describe Konfa do
     let(:test_value) { 'my test value' }
 
     before(:each) do
-      MyKonfa.__send__(:configuration)[:my_var] = test_value
+      MyKonfa.send(:store, :my_var, test_value)
     end
 
     it "prevents existing values to be over written" do
@@ -167,8 +161,7 @@ describe Konfa do
 
     it "drops any new values set in block" do
       MyKonfa.with_config do
-        MyKonfa.__send__(:configuration)[:my_var] = 'blah'
-
+        MyKonfa.send(:store, :my_var, 'blah')
         MyKonfa.get(:my_var).should eq('blah')
       end
 
@@ -225,7 +218,7 @@ describe Konfa do
 
     it "considers values 1, yes or true to be true" do
       ['true', '1', 'yes', 'on'].each do |truthy|
-        MyKonfa.__send__(:configuration)[:my_var] = truthy
+        MyKonfa.send(:store, :my_var, truthy)
 
         MyKonfa.true?(:my_var).should be_true
         MyKonfa.false?(:my_var).should be_false
@@ -234,7 +227,7 @@ describe Konfa do
 
     it "considers nil or any value other than 1, yes or true to be false" do
       [nil, '0', 'false', 'blah', 'NOT TRUE'].each do |falsy|
-        MyKonfa.__send__(:configuration)[:my_var] = falsy
+        MyKonfa.send(:store, :my_var, falsy)
 
         MyKonfa.true?(:my_var).should be_false
         MyKonfa.false?(:my_var).should be_true
@@ -243,7 +236,7 @@ describe Konfa do
 
     it "is case insensitive" do
       ['True', 'trUe', 'yEs', 'YES', 'oN'].each do |truthy|
-        MyKonfa.__send__(:configuration)[:my_var] = truthy
+        MyKonfa.send(:store, :my_var, truthy)
 
         MyKonfa.true?(:my_var).should be_true
         MyKonfa.false?(:my_var).should be_false
@@ -252,7 +245,7 @@ describe Konfa do
 
     it "ignores whitespace" do
       ['    true', ' on ', '1    '].each do |truthy|
-        MyKonfa.__send__(:configuration)[:my_var] = truthy
+        MyKonfa.send(:store, :my_var, truthy)
 
         MyKonfa.true?(:my_var).should be_true
         MyKonfa.false?(:my_var).should be_false
@@ -272,46 +265,31 @@ describe Konfa do
     end
   end
 
-
-  context "feature flags" do
-    let(:features_file) { File.expand_path("../support/with_features.yaml", __FILE__) }
-
-    it 'provides interface to check fo features' do
-      MyKonfaWithFeatures.respond_to?(:'feature?').should be_true
-    end
-
-    it 'can be initialized without declaring features' do
-      expect {
-        MyKonfaWithFeatures.initialize_from_yaml(good_file)
-      }.not_to raise_error
-
-      MyKonfaWithFeatures.feature?(:default_feature).should be_true
-      MyKonfaWithFeatures.feature?(:enabled_feature).should be_false
-      MyKonfaWithFeatures.feature?(:disabled_feature).should be_false
-    end
-
-    it 'reads features from YAML' do
-      MyKonfaWithFeatures.initialize_from_yaml(features_file)
-
-      MyKonfaWithFeatures.feature?(:default_feature).should be_true
-      MyKonfaWithFeatures.feature?(:enabled_feature).should be_true
-      MyKonfaWithFeatures.feature?(:disabled_feature).should be_false
-    end
-
-    it 'reads feature settings from environment' do
+  context "when declaring multiple sub classes" do
+    it 'is possible to initialize them both from env' do
       begin
-        ENV["APP_FEAT_ENABLED_FEATURE"] = 'on'
-        ENV["APP_FEAT_DISABLED_FEATURE"] = 'off'
+        ENV["PREF_MY_VAR"]       = 'belongs to MyKonfa'
+        ENV["OTHER_PREF_MY_VAR"] = 'belongs to MyOtherKonfa'
 
-        MyKonfaWithFeatures.initialize_from_env
+        expect {
+          MyKonfa.initialize_from_env
+          MyOtherKonfa.initialize_from_env
+        }.not_to raise_error
 
-        MyKonfaWithFeatures.feature?(:default_feature).should be_true
-        MyKonfaWithFeatures.feature?(:enabled_feature).should be_true
-        MyKonfaWithFeatures.feature?(:disabled_feature).should be_false
+        MyKonfa.get(:my_var).should == 'belongs to MyKonfa'
+        MyOtherKonfa.get(:my_var).should == 'belongs to MyOtherKonfa'
       ensure
-        ENV.delete("APP_FEAT_ENABLED_FEATURE")
-        ENV.delete("APP_FEAT_DISABLED_FEATURE")
+        ENV.delete("PREF_MY_VAR")
+        ENV.delete("OTHER_PREF_MY_VAR")
       end
+    end
+
+    it 'is possible to initialize them both from config' do
+      MyKonfa.initialize_from_yaml(good_file)
+      MyOtherKonfa.initialize_from_yaml(bool_file)
+
+      MyKonfa.get(:my_var).should == 'read from the yaml file'
+      MyOtherKonfa.get(:my_var).should == 'true'
     end
   end
 end
