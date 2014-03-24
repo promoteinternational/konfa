@@ -3,11 +3,40 @@ $: << File.join(File.dirname(File.dirname(__FILE__)), "lib")
 require 'konfa'
 
 class MyKonfa < Konfa::Base
-  @@env_variable_prefix = 'PREF_'
-  @@variables = {
-    :my_var         => 'default value',
-    :default_is_nil => nil
-  }
+  class << self
+    def env_variable_prefix
+      'PREF_'
+    end
+
+    def allowed_variables
+      {
+        :my_var         => 'default value',
+        :default_is_nil => nil
+      }
+    end
+  end
+end
+
+class MyKonfaWithFeatures < Konfa::Base
+  class << self
+    def features_prefix
+      'feat'
+    end
+
+    def allowed_variables
+      {
+        :my_var => 'the variable',
+      }
+    end
+
+    def allowed_features
+      {
+        :enabled_feature => nil,
+        :disabled_feature => nil,
+        :default_feature => 'true'
+      }
+    end
+  end
 end
 
 describe Konfa do
@@ -15,7 +44,6 @@ describe Konfa do
   let(:good_file) { File.expand_path("../support/good_config.yaml", __FILE__) }
   let(:bad_file)  { File.expand_path("../support/bad_config.yaml", __FILE__) }
   let(:not_yaml)  { File.expand_path("../support/not_yaml.yaml", __FILE__) }
-
 
   context "#variables" do
     it "can list available configuration variables" do
@@ -34,38 +62,31 @@ describe Konfa do
     end
 
     it "dumpes the current state" do
-      original = MyKonfa.dump[:default_is_nil]
-      MyKonfa.set :default_is_nil, 'not nil'
-      MyKonfa.dump[:default_is_nil].should_not == original
+      dumped = MyKonfa.dump
+      dumped.should_not equal(MyKonfa.dump)
     end
   end
 
-  context "#get and #set" do
-
-    before do
-      @original = MyKonfa.dump
+  context "class configuration" do
+    it "does not provide direct access to variable store" do
+      expect {
+        MyKonfa.configuration
+      }.to raise_error(NoMethodError)
     end
+  end
 
-    after do
-      @original.each { |k, v| MyKonfa.set(k, v) }
-    end
-
-    it "all variables can be accessed or set" do
+  context "#get" do
+    it "all variables can be accessed" do
       MyKonfa.variables.each do |variable|
-        MyKonfa.set(variable, 'test value').should_not be_nil
-        MyKonfa.get(variable).should == 'test value'
+        expect {
+          MyKonfa.get(variable)
+        }.not_to raise_error
       end
     end
 
     it "raises an exception if unknown configuration variable is accessed" do
       expect {
         MyKonfa.get :_this_is_totally_wrong
-      }.to raise_error Konfa::UnsupportedVariableError
-    end
-
-    it "raises an exception if unknown configuration variable is being set" do
-      expect {
-        MyKonfa.set :_this_is_totally_wrong, 'some value'
       }.to raise_error Konfa::UnsupportedVariableError
     end
   end
@@ -117,19 +138,6 @@ describe Konfa do
       end
     end
 
-    it "allows the default variable key prefix to be overridden" do
-      begin
-        ENV["COOL_PREFIX_MY_VAR"]  = 'set from env with cool prefix'
-        ENV["PREF_MY_VAR"]         = 'should be ignored'
-
-        MyKonfa.initialize_from_env('COOL_PREFIX_')
-        MyKonfa.get(:my_var).should == 'set from env with cool prefix'
-      ensure
-        ENV.delete("COOL_PREFIX_MY_VAR")
-        ENV.delete("PREF_MY_VAR")
-      end
-    end
-
     it "requires all keys in namespace to be defined in config class" do
       ENV["PREF_BAD_VARIABLE"] = 'should yield an error'
 
@@ -145,8 +153,8 @@ describe Konfa do
 
     let(:test_value) { 'my test value' }
 
-    before do
-      MyKonfa.set(:my_var, test_value)
+    before(:each) do
+      MyKonfa.__send__(:configuration)[:my_var] = test_value
     end
 
     it "prevents existing values to be over written" do
@@ -159,7 +167,8 @@ describe Konfa do
 
     it "drops any new values set in block" do
       MyKonfa.with_config do
-        MyKonfa.set(:my_var, 'blah')
+        MyKonfa.__send__(:configuration)[:my_var] = 'blah'
+
         MyKonfa.get(:my_var).should eq('blah')
       end
 
@@ -216,7 +225,8 @@ describe Konfa do
 
     it "considers values 1, yes or true to be true" do
       ['true', '1', 'yes', 'on'].each do |truthy|
-        MyKonfa.set :my_var, truthy
+        MyKonfa.__send__(:configuration)[:my_var] = truthy
+
         MyKonfa.true?(:my_var).should be_true
         MyKonfa.false?(:my_var).should be_false
       end
@@ -224,7 +234,8 @@ describe Konfa do
 
     it "considers nil or any value other than 1, yes or true to be false" do
       [nil, '0', 'false', 'blah', 'NOT TRUE'].each do |falsy|
-        MyKonfa.set :my_var, falsy
+        MyKonfa.__send__(:configuration)[:my_var] = falsy
+
         MyKonfa.true?(:my_var).should be_false
         MyKonfa.false?(:my_var).should be_true
       end
@@ -232,7 +243,8 @@ describe Konfa do
 
     it "is case insensitive" do
       ['True', 'trUe', 'yEs', 'YES', 'oN'].each do |truthy|
-        MyKonfa.set :my_var, truthy
+        MyKonfa.__send__(:configuration)[:my_var] = truthy
+
         MyKonfa.true?(:my_var).should be_true
         MyKonfa.false?(:my_var).should be_false
       end
@@ -240,7 +252,8 @@ describe Konfa do
 
     it "ignores whitespace" do
       ['    true', ' on ', '1    '].each do |truthy|
-        MyKonfa.set :my_var, truthy
+        MyKonfa.__send__(:configuration)[:my_var] = truthy
+
         MyKonfa.true?(:my_var).should be_true
         MyKonfa.false?(:my_var).should be_false
       end
@@ -256,6 +269,49 @@ describe Konfa do
     it "calls after_initialize when initialized from yaml" do
       MyKonfa.should_receive(:after_initialize)
       MyKonfa.initialize_from_yaml(good_file)
+    end
+  end
+
+
+  context "feature flags" do
+    let(:features_file) { File.expand_path("../support/with_features.yaml", __FILE__) }
+
+    it 'provides interface to check fo features' do
+      MyKonfaWithFeatures.respond_to?(:'feature?').should be_true
+    end
+
+    it 'can be initialized without declaring features' do
+      expect {
+        MyKonfaWithFeatures.initialize_from_yaml(good_file)
+      }.not_to raise_error
+
+      MyKonfaWithFeatures.feature?(:default_feature).should be_true
+      MyKonfaWithFeatures.feature?(:enabled_feature).should be_false
+      MyKonfaWithFeatures.feature?(:disabled_feature).should be_false
+    end
+
+    it 'reads features from YAML' do
+      MyKonfaWithFeatures.initialize_from_yaml(features_file)
+
+      MyKonfaWithFeatures.feature?(:default_feature).should be_true
+      MyKonfaWithFeatures.feature?(:enabled_feature).should be_true
+      MyKonfaWithFeatures.feature?(:disabled_feature).should be_false
+    end
+
+    it 'reads feature settings from environment' do
+      begin
+        ENV["APP_FEAT_ENABLED_FEATURE"] = 'on'
+        ENV["APP_FEAT_DISABLED_FEATURE"] = 'off'
+
+        MyKonfaWithFeatures.initialize_from_env
+
+        MyKonfaWithFeatures.feature?(:default_feature).should be_true
+        MyKonfaWithFeatures.feature?(:enabled_feature).should be_true
+        MyKonfaWithFeatures.feature?(:disabled_feature).should be_false
+      ensure
+        ENV.delete("APP_FEAT_ENABLED_FEATURE")
+        ENV.delete("APP_FEAT_DISABLED_FEATURE")
+      end
     end
   end
 end
