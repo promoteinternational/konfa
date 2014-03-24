@@ -14,12 +14,14 @@ Basic Usage
 require 'konfa'
 
 class MyAppConfig < Konfa::Base
-  @@variables = {
-    show_stuff: 'yes',             # You can describe what the variable's for here 
-    stuff_id: nil,                 # ID of the stuff we're using
-    lasers: 'off',
-    tasers: 'on',
-  }
+  def self.allowed_variables
+    {
+      show_stuff: 'yes',             # You can describe what the variable's for here
+      stuff_id: nil,                 # ID of the stuff we're using
+      lasers: 'off',
+      tasers: 'on',
+    }
+  end
 end
 
 # ... somewhere early in execution ..."
@@ -36,16 +38,36 @@ MyAppConfig.get(:no_such_variable) # Kabooom
 
 ```
 
-@@variables
+allowed_variables
 -----------
 
-Valid configuration variables has to be declared in the @@variables hash. If you do not want to provide a default value, just use ```nil```.
+Valid configuration variables has to be declared and returned by the ```allowed_variables``` hash. If you do not want to provide a default value, just use ```nil```.
 
 Values
 ------
-For the sake of simplicity, values are always converted to, and treated as, strings. You will have to cast it yourself if you need something else. The rationale behind this is to be able to initialize configuration values from sources that does not support specific datatypes (such as the environment)
+For the sake of simplicity, values are always converted to, and treated as, strings. The rationale behind this is to be able to initialize configuration values from sources that does not support specific datatypes (such as the environment)
 
-Complex values, such as arrays or hashes, are not supported.
+Complex values, such as arrays or hashes, are not supported out of the box, but you could impelement it like this for example:
+
+```ruby
+class MyAppConfig < Konfa::Base
+  def self.allowed_variables
+    {
+      :numbers => 'one,two,three'
+    }
+  end
+
+  def self.as_list(key)
+    get(key).split(/\s*,\s*/)
+  end
+end
+
+# Later on
+
+MyAppConfig.get(:numbers)     => 'one,two,three'
+MyAppConfig.as_list(:numbers) => ['one','two','three']
+```
+
 
 Booleans
 --------
@@ -53,7 +75,9 @@ Because values are converted to strings, you can use the ```true?``` and ```fals
 
 So
 ```ruby
-MyAppConfig.set(:bool, 'yes')
+# given
+#   :bool => 'yes'
+
 MyAppConfig.get(:bool) # => "yes"
 MyAppConfig.true?(:bool) # => true
 MyAppConfig.false?(:bool) # => false
@@ -61,23 +85,32 @@ MyAppConfig.false?(:bool) # => false
 
 Settings values
 ---------------
-You *can* use the ```set``` method to set a value, but don't do that in your application code. It is, however, useful in tests and if implementing own initialisers.
+Konfa does not provide an interface to set values. But if you *really* want to, you can do
+
+```ruby
+
+  MyAppConfig.send(:store, :key, 'value')
+
+```
+
+This could be useful tests and, but you really shouldn't set config values from within the application.
 
 with_config
 -----------
 The ```with_config``` method is useful for testing. It can be used like this
 
 ```ruby
-MyAppConfig.set(:var, 'off')
+# given
+#   :var => 'off'
 
 MyAppConfig.with_config(:var => 'on') do
-    MyAppConfig.get(:var) # => "on" inside this block
+  MyAppConfig.get(:var) # => "on" inside this block
 end
 
 MyAppConfig.get(:var) # => "off" again
 ```
 
-Original configuration values will be restored even if the block raises an exception. 
+Original configuration values will be restored even if the block raises an exception.
 
 Values from environment
 -----------------------
@@ -86,11 +119,17 @@ The ```initialize_from_env``` method populates values from the environment. Konf
 ```ruby
 # in myapp.rb
 class MyAppConfig < Konfa::Base
-  @@env_variable_prefix = 'MYAPP_'
-  @@variables = {
-    show_stuff: 'yes',
-    lang: 'sv',
-  }
+
+  def self.env_variable_prefix
+    'MY_APP'
+  end
+
+  def self.allowed_variables
+    {
+      show_stuff: 'yes',
+      lang: 'sv'
+    }
+  end
 end
 
 MyAppConfig.initialize_from_env
@@ -116,7 +155,7 @@ The ```initialize_from_yaml``` will read values from the given yaml file. Only k
 *Note on YAML and booleans*
 
 Ruby's YAML implementation will cast the words ```yes```, ```true```, ```on```, ```off```, ```false``` and ```no```
-into a Boolean. This applies to both keys and values. Because Konfa assumes that all values are strings, values are 
+into a Boolean. This applies to both keys and values. Because Konfa assumes that all values are strings, values are
 always converted to a String. This means that the word ```yes``` will result in the string ```"true"```.
 To avoid this, please quote the word in your YAML source. Like so:
 
@@ -128,17 +167,20 @@ my_key_2: 'yes'   # Will result in Konfa.get(:my_key) => "yes"
 
 after_initialize
 ----------------
-Your subclass may implement a class method called ```after_initialize``` that will be called immediately after Konfa has 
-been initialized with configuration values. This is useful if you for example want to configure logging or something 
+Your subclass may implement a class method called ```after_initialize``` that will be called immediately after Konfa has
+been initialized with configuration values. This is useful if you for example want to configure logging or something
 else when you have to be sure that you have all config values.
 
 Konfa's base implementation does nothing, so there's no point in calling ```super``` here.
 
 ```ruby
 class MyAppConfig < Konfa::Base
-  @@variables = {
-    log_file: nil,
-  }
+  def self.allowed_variables
+    {
+      log_file: nil
+    }
+  end
+
   def self.after_initialize
     Logger.file = get(:log_file)
   end

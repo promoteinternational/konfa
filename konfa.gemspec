@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'konfa'
-  s.version     = '0.0.2'
-  s.date        = '2013-09-20'
+  s.version     = '0.1.0'
+  s.date        = '2014-03-24'
   s.summary     = "Application configuration"
   s.description = "Helps you avoid common pitfalls when dealing with app config"
   s.authors     = ["Gunnar Hansson", "Avidity"]
