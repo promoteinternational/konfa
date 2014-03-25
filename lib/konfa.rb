@@ -76,8 +76,13 @@ module Konfa
         # load_file just returns "false" if it fails
 
         yaml_data = YAML.load_file(path)
-        yaml_data.each do |variable, value|
-          self.store(variable, value)
+
+        unless yaml_data.nil?
+          raise InitializationError.new("Bad YAML format, key/value pairs expected") unless yaml_data.kind_of?(Hash)
+
+          yaml_data.each do |variable, value|
+            self.store(variable, value)
+          end
         end
 
         after_initialize

@@ -16,7 +16,6 @@ class MyKonfa < Konfa::Base
     end
   end
 end
-require 'debugger'
 
 class MyOtherKonfa < Konfa::Base
   class << self
@@ -38,6 +37,12 @@ describe Konfa do
   let(:good_file) { File.expand_path("../support/good_config.yaml", __FILE__) }
   let(:bad_file)  { File.expand_path("../support/bad_config.yaml", __FILE__) }
   let(:not_yaml)  { File.expand_path("../support/not_yaml.yaml", __FILE__) }
+  let(:empty_file) { File.expand_path("../support/empty.yaml", __FILE__) }
+  let(:array_file) { File.expand_path("../support/array.yaml", __FILE__) }
+  before(:each) do
+    MyKonfa.send(:configuration=, nil)
+    MyOtherKonfa.send(:configuration=, nil)
+  end
 
   context "#variables" do
     it "can list available configuration variables" do
@@ -107,6 +112,27 @@ describe Konfa do
       MyKonfa.initialize_from_yaml(bool_file)
       MyKonfa.get(:my_var).should be_a(String)
       MyKonfa.get(:my_var).should == 'true'
+    end
+
+    it "is possible to load an empty file" do
+      MyKonfa.should_receive(:after_initialize)
+      expect {
+        MyKonfa.initialize_from_yaml(empty_file)
+      }.not_to raise_error
+      MyKonfa.get(:my_var).should == 'default value'
+    end
+
+    it "raises an exception if file does not contain YAML" do
+      MyKonfa.should_not_receive(:after_initialize)
+      expect {
+        MyKonfa.initialize_from_yaml(not_yaml)
+      }.to raise_error(Konfa::InitializationError)
+    end
+
+    it "raises an exception if file does not key/value pairs" do
+      expect {
+        MyKonfa.initialize_from_yaml(array_file)
+      }.to raise_error(Konfa::InitializationError)
     end
   end
 
