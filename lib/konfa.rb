@@ -27,7 +27,7 @@ module Konfa
         if self.configuration.has_key? key
           self.configuration[key] = value.to_s
         else
-          self.key_missing(key, value)
+          self.on_key_missing(key, value)
         end
       end
 
@@ -46,7 +46,7 @@ module Konfa
         {}
       end
 
-      def key_missing(key, value)
+      def on_key_missing(key, value)
         raise UnsupportedVariableError.new(key)
       end
 
