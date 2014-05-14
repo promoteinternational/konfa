@@ -102,7 +102,7 @@ describe Konfa do
       MyKonfa.initialize_from_yaml(good_file).should == MyKonfa.dump
     end
 
-    it "requires all keys in YAML file to be defined in config class" do
+    it "requires all keys in YAML file to be defined in config class by default" do
       expect {
         MyKonfa.initialize_from_yaml(bad_file)
       }.to raise_error Konfa::UnsupportedVariableError
@@ -158,7 +158,7 @@ describe Konfa do
       end
     end
 
-    it "requires all keys in namespace to be defined in config class" do
+    it "requires all keys in namespace to be defined in config class by default" do
       ENV["PREF_BAD_VARIABLE"] = 'should yield an error'
 
       expect {
