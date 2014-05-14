@@ -24,12 +24,14 @@ module Konfa
 
       def store(key, value)
         key = key.to_sym
-        raise UnsupportedVariableError.new(key) unless self.configuration.has_key? key
-        self.configuration[key] = value.to_s
+        if self.configuration.has_key? key
+          self.configuration[key] = value.to_s
+        else
+          self.key_missing(key, value)
+        end
       end
 
       public
-
 
       #
       # The following methods should be overridden and used to configure the
@@ -44,6 +46,9 @@ module Konfa
         {}
       end
 
+      def key_missing(key, value)
+        raise UnsupportedVariableError.new(key)
+      end
 
       #
       # The following methods provides the interface to this class
