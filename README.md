@@ -89,7 +89,7 @@ Konfa does not provide an interface to set values. But if you *really* want to, 
   MyAppConfig.send(:store, :key, 'value')
 ```
 
-This could be useful tests and, but you really shouldn't set config values from within the application.
+This could be useful for testing and, but you really shouldn't set config values from within the application.
 
 with_config
 -----------
@@ -181,3 +181,28 @@ class MyAppConfig < Konfa::Base
   end
 end
 ```
+
+initialize_deferred
+-------------------
+Sometimes a Konfa subclass cannot immediately perform its initialization routine
+when it is declared, if for example a database connection is established after
+Konfa is set up. This is when ```initialize_deferred``` comes in handy. It's used
+like so:
+
+```ruby
+
+MyAppConfig.initialize_deferred(:initialize_from_yaml, 'path_to_yaml_file')
+
+# ... things happens, and later on in the execution:
+
+MyAppConfig.get(:the_value)
+```
+
+The first call to ```get``` (or ```true?``` or ```false?```) will trigger the
+initialization and populate Konfa with values before returning the correspoding value.
+
+You may pass in any initialization routine to the call, including one declared by the subclass.
+
+From a design perspective, it iss desireble to initialize Konfa as early as possible,
+as it will fail early if bad configuration values are found. Do not use this method 
+unless there is a good reason to.
