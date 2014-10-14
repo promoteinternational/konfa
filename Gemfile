@@ -1,8 +1,5 @@
 source 'https://rubygems.org'
 
-
-gem 'yaml'
-
 group :test do
-  gem 'rspec'
+  gem 'rspec', '3.0'
 end
