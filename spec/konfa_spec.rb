@@ -169,6 +169,17 @@ describe Konfa do
     end
   end
 
+  context "#initialize_deferred" do
+    it 'executes initialization method on first call to get' do
+      MyKonfa.initialize_deferred(:initialize_from_yaml, good_file)
+      # FIXME: Upgrade rspec and add this test
+      # MyKonfa.should_receive(:initialize_from_yaml).with(good_file).and_call_original
+      MyKonfa.dump[:my_var].should == 'default value'
+      MyKonfa.get(:my_var).should == 'read from the yaml file'
+      MyKonfa.dump[:my_var].should == 'read from the yaml file'
+    end
+  end
+
   context "#with_config" do
 
     let(:test_value) { 'my test value' }
