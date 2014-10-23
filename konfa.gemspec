@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.require_ruby_version = '>= 1.9.3'
+  s.required_ruby_version = '>= 1.9.3'
   s.name        = 'konfa'
   s.version     = '0.3.0'
   s.date        = '2014-03-24'
