@@ -203,6 +203,10 @@ initialization and populate Konfa with values before returning the correspoding 
 
 You may pass in any initialization routine to the call, including one declared by the subclass.
 
-From a design perspective, it iss desireble to initialize Konfa as early as possible,
-as it will fail early if bad configuration values are found. Do not use this method 
+From a design perspective, it is desireble to initialize Konfa as early as possible,
+as it will fail early if bad configuration values are found. Do not use this method
 unless there is a good reason to.
+
+You may override the ```do_deferred_initialization?``` method for implementing own logic
+on when to run the initialization code. This method is invoked at every time a value is
+accessed.
