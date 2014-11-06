@@ -12,7 +12,11 @@ module Konfa
       # they will then be public
       #
 
-      attr_writer :configuration, :deferred
+      attr_writer :configuration, :deferred, :initialized_deferred
+
+      def initialized_deferred
+        @initialized_deferred ||= false
+      end
 
       def configuration
         @configuration ||= self.allowed_variables
@@ -37,7 +41,7 @@ module Konfa
 
       def do_deferred_initialization
         self.send(self.deferred.first, *self.deferred[1..-1])
-        self.deferred = nil
+        self.initialized_deferred = true
       end
 
       public
@@ -59,12 +63,16 @@ module Konfa
         raise UnsupportedVariableError.new(key)
       end
 
+      def do_deferred_initialization?
+        !self.initialized_deferred && !self.deferred.nil?
+      end
+
       #
       # The following methods provides the interface to this class
       #
 
       def get(variable)
-        self.do_deferred_initialization unless self.deferred.nil?
+        self.do_deferred_initialization if self.do_deferred_initialization?
         raise UnsupportedVariableError.new(variable) unless self.configuration.has_key? variable
         self.configuration[variable]
       end
@@ -135,6 +143,7 @@ module Konfa
 
           self.store(variable, ENV[key])
         }
+
         after_initialize
         dump
       end
