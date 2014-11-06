@@ -32,6 +32,7 @@ class MyOtherKonfa < Konfa::Base
   end
 end
 
+
 describe Konfa do
   let(:bool_file)  { File.expand_path("../support/bool_config.yaml", __FILE__) }
   let(:good_file)  { File.expand_path("../support/good_config.yaml", __FILE__) }
@@ -42,7 +43,11 @@ describe Konfa do
 
   before(:each) do
     MyKonfa.send(:configuration=, nil)
+    MyKonfa.send(:initialized_deferred=, false)
+    MyKonfa.send(:deferred=, nil)
     MyOtherKonfa.send(:configuration=, nil)
+    MyOtherKonfa.send(:initialized_deferred=, false)
+    MyOtherKonfa.send(:deferred=, nil)
   end
 
   context "#variables" do
@@ -171,19 +176,35 @@ describe Konfa do
   end
 
   context "#initialize_deferred" do
-    it 'executes initialization method on first call to get' do
+    before(:each) do
       MyKonfa.initialize_deferred(:initialize_from_yaml, good_file)
-      # FIXME: Upgrade rspec and add this test
-      expect(MyKonfa).to receive(:initialize_from_yaml).with(good_file).and_call_original
+    end
+
+    it 'executes initialization method on first call to get' do
+      expect(MyKonfa).to receive(:initialize_from_yaml).once.with(good_file).and_call_original
+      MyKonfa.get :my_var
       MyKonfa.get :my_var
     end
 
-    it 'populates konfiguration variables in first call to get' do
-      MyKonfa.initialize_deferred(:initialize_from_yaml, good_file)
-
+    it 'populates configuration variables in first call to get' do
       expect(MyKonfa.dump[:my_var]).to eq 'default value'
       expect(MyKonfa.get :my_var).to eq 'read from the yaml file'
       expect(MyKonfa.dump[:my_var]).to eq 'read from the yaml file'
+    end
+
+    it 'executes initialization method if do_deferred_initialization? returns true' do
+      allow(MyKonfa).to receive(:do_deferred_initialization?).and_return(true)
+      expect(MyKonfa).to receive(:initialize_from_yaml).exactly(2).times.with(good_file)
+
+      MyKonfa.get :my_var
+      MyKonfa.get :my_var
+    end
+
+    it 'does not execute initialization method if do_deferred_initialization? returns false' do
+      allow(MyKonfa).to receive(:do_deferred_initialization?).and_return(false)
+      expect(MyKonfa).not_to receive(:initialize_from_yaml)
+
+      MyKonfa.get :my_var
     end
   end
 
