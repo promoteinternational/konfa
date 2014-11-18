@@ -93,7 +93,8 @@ This could be useful for testing and, but you really shouldn't set config values
 
 with_config
 -----------
-The ```with_config``` method is useful for testing. It can be used like this
+The ```with_config``` method is useful when code needs to be executed with
+temporary settings. It can be used like this
 
 ```ruby
 # given
@@ -107,6 +108,32 @@ MyAppConfig.get(:var) # => "off" again
 ```
 
 Original configuration values will be restored even if the block raises an exception.
+
+This could be useful in testing. Another alternative is the RSpec plugin
+
+Testing
+-------
+
+The RSpec plugin makes it easy to stub config variables with less typing manual
+checking. It can be used like this
+
+
+```ruby
+require 'konfa/rspec'
+
+describe Something
+  include_context 'with konfa', MyKonfaSubclass
+
+  it 'does something' do
+    let_config(:my_variable, 'testing value')
+    expect(code_that_returns_my_variable).to eq 'testing value'
+  end
+end
+```
+
+It will ensure ```my_variables``` exists and it will allow the tested code to be
+executed with temporary values without having to worry about modifying global
+configuration that may disrupt subsequent examples.
 
 Populate with values from environment
 -------------------------------------
