@@ -12,18 +12,19 @@ module Konfa
       # they will then be public
       #
 
-      attr_writer :configuration, :deferred, :initialized_deferred
+      attr_writer :configuration, :initializer, :initialized
 
-      def initialized_deferred
-        @initialized_deferred ||= false
+      def initialized
+        @initialized ||= false
       end
 
       def configuration
-        @configuration ||= self.allowed_variables
+        self.init
+        @configuration
       end
 
-      def deferred
-        @deferred ||= nil
+      def initializer
+        @initializer ||= nil
       end
 
       def truthy?(value)
@@ -32,16 +33,12 @@ module Konfa
 
       def store(key, value)
         key = key.to_sym
-        if self.configuration.has_key? key
-          self.configuration[key] = value.to_s
+        if self.allowed_variables.has_key? key
+          # Access configuration variable directly to avoid calling init
+          @configuration[key] = value.to_s
         else
           self.on_key_missing(key, value)
         end
-      end
-
-      def do_deferred_initialization
-        self.send(self.deferred.first, *self.deferred[1..-1])
-        self.initialized_deferred = true
       end
 
       public
@@ -63,16 +60,27 @@ module Konfa
         raise UnsupportedVariableError.new(key)
       end
 
-      def do_deferred_initialization?
-        !self.initialized_deferred && !self.deferred.nil?
-      end
-
       #
       # The following methods provides the interface to this class
       #
 
+      def init
+        return if self.initialized == true
+        # Set to true before calling to prevent recursion if
+        # an initializer is accessing the configuration
+        self.initialized = true
+        unless self.initializer.nil?
+          self.send(self.initializer.first, *self.initializer[1..-1])
+        end
+        self.after_initialize
+      end
+
+      def reset_configuration
+        self.initialized = false
+        @configuration = self.allowed_variables
+      end
+
       def get(variable)
-        self.do_deferred_initialization if self.do_deferred_initialization?
         raise UnsupportedVariableError.new(variable) unless self.configuration.has_key? variable
         self.configuration[variable]
       end
@@ -93,8 +101,8 @@ module Konfa
         self.configuration.dup
       end
 
-      def initialize_deferred(method, *args)
-        self.deferred = [method, *args]
+      def initialize_with(method, *args)
+        self.initializer = [method, *args]
       end
 
       def after_initialize
@@ -128,7 +136,6 @@ module Konfa
           end
         end
 
-        after_initialize
         dump
       end
 
@@ -144,7 +151,6 @@ module Konfa
           self.store(variable, ENV[key])
         }
 
-        after_initialize
         dump
       end
     end
