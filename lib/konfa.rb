@@ -20,7 +20,7 @@ module Konfa
 
       def configuration
         self.init
-        @configuration
+        @configuration ||= self.allowed_variables
       end
 
       def initializer
