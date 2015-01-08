@@ -66,7 +66,7 @@ describe Konfa do
       expect(MyTestKonfa.dump.keys).to eq MyTestKonfa.variables
     end
 
-    it "dumpes the current state" do
+    it "dupes the current state" do
       dumped = MyTestKonfa.dump
       expect(dumped).not_to equal MyTestKonfa.dump
     end

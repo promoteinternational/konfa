@@ -7,7 +7,7 @@ module Konfa
       protected
 
       #
-      # The following methods are not a part of the public API. You may sublcass
+      # The following methods are not a part of the public API. You may subclass
       # them, but remember that unless you scope them as protected or private,
       # they will then be public
       #
