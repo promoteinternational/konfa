@@ -1,6 +1,4 @@
-$: << File.join(File.dirname(File.dirname(__FILE__)), "lib")
-
-require 'konfa'
+require_relative 'spec_helper'
 
 class MyTestKonfa < Konfa::Base
   class << self
