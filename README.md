@@ -222,7 +222,7 @@ The default behaviour:
 
 ```ruby
 
-MyAppConfig.init_with(:yaml), 'path_to_yaml_file')
+MyAppConfig.init_with(:yaml, 'path_to_yaml_file')
 
 # ... things happens, and later on in the execution:
 
@@ -234,7 +234,7 @@ Initialize earlier:
 
 ```ruby
 
-MyAppConfig.init_with(:yaml), 'path_to_yaml_file')
+MyAppConfig.init_with(:yaml, 'path_to_yaml_file')
 
 MyAppConfig.init # Konfa will now read the yaml file and populate the configuration
                  # It's also possible to chain:
