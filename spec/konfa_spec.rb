@@ -1,5 +1,35 @@
 require_relative 'spec_helper'
 
+class MyTestKonfa < Konfa::Base
+  class << self
+    def env_variable_prefix
+      'PREF_'
+    end
+
+    def allowed_variables
+      {
+        :my_var         => 'default value',
+        :default_is_nil => nil
+      }
+    end
+  end
+end
+
+class MyOtherTestKonfa < Konfa::Base
+  class << self
+    def env_variable_prefix
+      'OTHER_PREF_'
+    end
+
+    def allowed_variables
+      {
+        :my_var         => 'other default',
+        :default_is_nil => 'no it is not'
+      }
+    end
+  end
+end
+
 describe Konfa do
   let(:bool_file)  { File.expand_path("../support/bool_config.yaml", __FILE__) }
   let(:good_file)  { File.expand_path("../support/good_config.yaml", __FILE__) }
@@ -243,6 +273,26 @@ describe Konfa do
         expect(MyTestKonfa.true? :my_var).to be true
         expect(MyTestKonfa.false? :my_var).to be false
       end
+    end
+  end
+
+  context "#store" do
+    it "raises an error if trying to store a non-declared variable" do
+      expect {
+        MyTestKonfa.send(:store, 'invalid_variable', 'data')
+      }.to raise_error Konfa::UnsupportedVariableError
+    end
+
+    it "stores numbers as strings" do
+      MyTestKonfa.send(:store, :my_var, 123)
+      expect(MyTestKonfa.get(:my_var)).to eq('123')
+    end
+
+    it "stores booleans as strings" do
+      MyTestKonfa.send(:store, :my_var, true)
+      expect(MyTestKonfa.get(:my_var)).to eq('true')
+      MyTestKonfa.send(:store, :my_var, false)
+      expect(MyTestKonfa.get(:my_var)).to eq('false')
     end
   end
 

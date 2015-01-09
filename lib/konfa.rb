@@ -1,4 +1,3 @@
-require 'yaml'
 require_relative File.join(File.dirname(__FILE__), 'konfa', 'initializer')
 
 module Konfa
@@ -125,9 +124,6 @@ module Konfa
       end
 
     end
-  end
-
-  class InitializationError < StandardError
   end
 
   class UnsupportedVariableError < StandardError

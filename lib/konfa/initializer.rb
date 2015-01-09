@@ -1,3 +1,5 @@
+require 'yaml'
+
 module Konfa
   module Initializer
     def self.included(base)
@@ -12,7 +14,7 @@ module Konfa
         yaml_data = YAML.load_file(path)
 
         unless yaml_data.nil?
-          raise InitializationError.new("Bad YAML format, key/value pairs expected") unless yaml_data.kind_of?(Hash)
+          raise Konfa::InitializationError.new("Bad YAML format, key/value pairs expected") unless yaml_data.kind_of?(Hash)
 
           yaml_data.each do |variable, value|
             self.store(variable, value)
@@ -37,5 +39,8 @@ module Konfa
       end
     end
 
+  end
+
+  class InitializationError < StandardError
   end
 end

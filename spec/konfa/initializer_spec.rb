@@ -8,92 +8,59 @@ describe Konfa::Initializer do
   let(:empty_file) { File.expand_path("../../support/empty.yaml", __FILE__) }
   let(:array_file) { File.expand_path("../../support/array.yaml", __FILE__) }
 
-  # FIXME duplicated in konfa_spec
-  before(:each) do
-    MyTestKonfa.reinit
-    MyTestKonfa.send(:initializer=, nil)
-    MyTestKonfa.send(:configuration=, nil)
-    MyOtherTestKonfa.reinit
-    MyOtherTestKonfa.send(:initializer=, nil)
-    MyOtherTestKonfa.send(:configuration=, nil)
+  subject do
+    dummy = Class.new do
+      include Konfa::Initializer
+    end
+    allow(dummy).to receive(:store)
+    allow(dummy).to receive(:dump)
+    dummy
   end
 
   context "#init_with_yaml" do
-    it "returns parsed values" do
-      expect(MyTestKonfa.init_with_yaml(good_file)).to eq MyTestKonfa.dump
+    it 'calls store with data from yaml' do
+      expect(subject).to receive(:store).with('my_var', 'read from the yaml file')
+      subject.init_with_yaml(good_file)
     end
 
     it "raises an exception if file does not contain YAML" do
       expect {
-        MyTestKonfa.init_with_yaml(not_yaml)
+        subject.init_with_yaml(not_yaml)
       }.to raise_error(Konfa::InitializationError)
     end
 
     it "raises an exception if file does not key/value pairs" do
       expect {
-        MyTestKonfa.init_with_yaml(array_file)
+        subject.init_with_yaml(array_file)
       }.to raise_error(Konfa::InitializationError)
     end
 
-    it "requires all keys in YAML file to be defined in config class by default" do
+    it "is possible to load an empty file" do
+      expect(subject).to_not receive(:store)
       expect {
-        MyTestKonfa.init_with_yaml(bad_file)
-      }.to raise_error Konfa::UnsupportedVariableError
-    end
-
-    it "handles Ruby's implicit type conversion" do
-      MyTestKonfa.init_with_yaml(bool_file)
-      expect(MyTestKonfa.get :my_var).to be_a(String)
-      expect(MyTestKonfa.get :my_var).to eq 'true'
-    end
-
-    context "when used as an initializer" do
-      it "configures variables from a YAML file" do
-        expect {
-          MyTestKonfa.init_with(:yaml, good_file).init
-        }.to_not raise_error
-        expect(MyTestKonfa.get :my_var).to eq 'read from the yaml file'
-      end
-
-      it "is possible to load an empty file" do
-        expect {
-          MyTestKonfa.init_with(:yaml, empty_file).init
-        }.not_to raise_error
-        expect(MyTestKonfa.get :my_var).to eq 'default value'
-      end
+        subject.init_with_yaml(empty_file)
+      }.not_to raise_error
     end
   end
 
   context "#init_with_env" do
-
-    it "prefixes environment variables" do
-      expect(MyTestKonfa.env_variable_prefix).to eq 'PREF_'
+    before do
+      allow(subject).to receive(:env_variable_prefix).and_return('PREF_')
     end
 
-    it "can be initialized with environment variables" do
+    it "can be initialized with prefixed environment variables" do
       begin
         ENV["PREF_MY_VAR"] = 'set from env'
         ENV["IGNORE_MY_VAR"]  = 'should be ignored'
 
+        expect(subject).to receive(:store).with('my_var', 'set from env')
         expect {
-          MyTestKonfa.init_with_env
+          subject.init_with_env
         }.not_to raise_error
-
-        expect(MyTestKonfa.get :my_var).to eq 'set from env'
       ensure
         ENV.delete("PREF_MY_VAR")
         ENV.delete("IGNORE_MY_VAR")
       end
-    end
-
-    it "requires all keys in namespace to be defined in config class by default" do
-      ENV["PREF_BAD_VARIABLE"] = 'should yield an error'
-
-      expect {
-        MyTestKonfa.init_with_env
-      }.to raise_error Konfa::UnsupportedVariableError
-
-      ENV.delete("PREF_BAD_VARIABLE")
     end
   end
 
