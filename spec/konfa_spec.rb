@@ -151,7 +151,7 @@ describe Konfa do
         MyTestKonfa.init_with(:something, 'arg')
       }.to change {
         MyTestKonfa.send(:initializer)
-      }.from(nil).to(['init_with_something', 'arg'])
+      }.from(nil).to([:init_with_something, 'arg'])
     end
 
     it 'should return self' do

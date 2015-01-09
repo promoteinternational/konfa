@@ -99,7 +99,7 @@ module Konfa
       end
 
       def init_with(suffix, *args)
-        self.initializer = ["init_with_#{suffix}", *args]
+        self.initializer = [:"init_with_#{suffix}", *args]
         self
       end
 
