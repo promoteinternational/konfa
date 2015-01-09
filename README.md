@@ -26,7 +26,7 @@ end
 
 # ... somewhere early in execution ..."
 
-MyAppConfig.initialize_from_yaml('config/values.yaml')
+MyAppConfig.init_with(:yaml, 'config/values.yaml')
 
 # ... later on in the app ...
 
@@ -137,14 +137,14 @@ configuration that may disrupt subsequent examples.
 
 Populate with values from environment
 -------------------------------------
-The ```initialize_from_env``` method populates values from the environment. Konfa will only import variables with a specific prefix to avoid collisions with existing variables.
+Calling ```init_with(:env)``` populates values from the environment. Konfa will only import variables with a specific prefix to avoid collisions with existing variables.
 
 ```ruby
 # in myapp.rb
 class MyAppConfig < Konfa::Base
 
   def self.env_variable_prefix
-    'MY_APP'
+    'MY_APP_'
   end
 
   def self.allowed_variables
@@ -155,7 +155,7 @@ class MyAppConfig < Konfa::Base
   end
 end
 
-MyAppConfig.initialize_from_env
+MyAppConfig.init_with(:env)
 
 puts "I speak #{MyAppConfig.get(:lang)} and I will #{MyAppConfig.true?(:show_stuff) ? "" : "not"} show stuff"
 ```
@@ -172,7 +172,7 @@ I speak pt and I will not show stuff
 
 Populate with values from YAML
 ------------------------------
-The ```initialize_from_yaml``` will read values from the given yaml file. Only key/values are supported.
+The YAML initializer will read values from the given yaml file. Only key/values are supported.
 
 *Note on YAML and booleans*
 
@@ -209,31 +209,80 @@ class MyAppConfig < Konfa::Base
 end
 ```
 
-initialize_deferred
+Notes on initializing
 -------------------
-Sometimes a Konfa subclass cannot immediately perform its initialization routine
-when it is declared, if for example a database connection is established after
-Konfa is set up. This is when ```initialize_deferred``` comes in handy. It's used
-like so:
+
+## Initialization is deferred by default
+
+Konfa will initialize its values when a variable is first read (when for instance
+calling `get`, `true?` or `dump`). Initialization can be triggered earlier by calling
+the `init`method.
+
+The default behaviour:
 
 ```ruby
 
-MyAppConfig.initialize_deferred(:initialize_from_yaml, 'path_to_yaml_file')
+MyAppConfig.init_with(:yaml, 'path_to_yaml_file')
 
 # ... things happens, and later on in the execution:
 
-MyAppConfig.get(:the_value)
+MyAppConfig.get(:my_var) # Konfa will read the yaml file, populate the
+                         # configuration and then return the value of `my_var`
 ```
 
-The first call to ```get``` (or ```true?``` or ```false?```) will trigger the
-initialization and populate Konfa with values before returning the correspoding value.
+Initialize earlier:
 
-You may pass in any initialization routine to the call, including one declared by the subclass.
+```ruby
+
+MyAppConfig.init_with(:yaml, 'path_to_yaml_file')
+
+MyAppConfig.init # Konfa will now read the yaml file and populate the configuration
+                 # It's also possible to chain:
+                 #     MyAppConfig.init_with(:yaml, '...').init
+
+# ... things happens, and later on in the execution:
+
+MyAppConfig.get(:my_var)
+```
 
 From a design perspective, it is desireble to initialize Konfa as early as possible,
 as it will fail early if bad configuration values are found. Do not use this method
 unless there is a good reason to.
 
-You may override the ```do_deferred_initialization?``` method for implementing own logic
-on when to run the initialization code. This method is invoked at every time a value is
+You may override the ```init?``` method for implementing own logic on when to
+run the initialization code. This method is invoked at every time a value is
 accessed.
+
+## Custom initialization methods
+
+If you want to initialize Konfa with values from another source (for example a
+database), you need to implement an initialization method. Extend the module
+`Konfa::Initializer::ClassMethods` with your own method and call `init_with`.
+
+***NOTE:*** your initializer method name must be prefixed with: `init_with_` to
+avoid collisions in the configuration class.
+
+```ruby
+
+module Konfa
+  module Initializer
+    module ClassMethods
+      def init_with_numbers
+        self.store('my_var', '01234')
+      end
+    end
+  end
+end
+
+class MyAppConfig < Konfa::Base
+  def self.allowed_variables
+    {
+      my_var: nil,
+    }
+  end
+end
+
+MyAppConfig.init_with(:numbers) # Don't include prefix in symbol
+
+MyAppConfig.get(:my_var) # => 01234
+```

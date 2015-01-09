@@ -1,6 +1,4 @@
-$: << File.join(File.dirname(File.dirname(__FILE__)), "lib")
-
-require 'konfa'
+require_relative 'spec_helper'
 
 class MyTestKonfa < Konfa::Base
   class << self
@@ -32,22 +30,17 @@ class MyOtherTestKonfa < Konfa::Base
   end
 end
 
-
 describe Konfa do
   let(:bool_file)  { File.expand_path("../support/bool_config.yaml", __FILE__) }
   let(:good_file)  { File.expand_path("../support/good_config.yaml", __FILE__) }
-  let(:bad_file)   { File.expand_path("../support/bad_config.yaml", __FILE__) }
-  let(:not_yaml)   { File.expand_path("../support/not_yaml.yaml", __FILE__) }
-  let(:empty_file) { File.expand_path("../support/empty.yaml", __FILE__) }
-  let(:array_file) { File.expand_path("../support/array.yaml", __FILE__) }
 
   before(:each) do
+    MyTestKonfa.reinit
+    MyTestKonfa.send(:initializer=, nil)
     MyTestKonfa.send(:configuration=, nil)
-    MyTestKonfa.send(:initialized_deferred=, false)
-    MyTestKonfa.send(:deferred=, nil)
+    MyOtherTestKonfa.reinit
+    MyOtherTestKonfa.send(:initializer=, nil)
     MyOtherTestKonfa.send(:configuration=, nil)
-    MyOtherTestKonfa.send(:initialized_deferred=, false)
-    MyOtherTestKonfa.send(:deferred=, nil)
   end
 
   context "#variables" do
@@ -66,7 +59,7 @@ describe Konfa do
       expect(MyTestKonfa.dump.keys).to eq MyTestKonfa.variables
     end
 
-    it "dumpes the current state" do
+    it "dupes the current state" do
       dumped = MyTestKonfa.dump
       expect(dumped).not_to equal MyTestKonfa.dump
     end
@@ -96,115 +89,80 @@ describe Konfa do
     end
   end
 
-  context "#initialize_from_yaml" do
-    it "can be initialized with a YAML file" do
-      expect {
-        MyTestKonfa.initialize_from_yaml(good_file)
-      }.to_not raise_error
-      expect(MyTestKonfa.get :my_var).to eq 'read from the yaml file'
+  context "#init" do
+    before(:each) do
+      MyTestKonfa.init_with(:yaml, good_file)
     end
 
-    it "returns parsed values" do
-      expect(MyTestKonfa.initialize_from_yaml(good_file)).to eq MyTestKonfa.dump
+    it 'executes initialization method on first call to configuration' do
+      expect(MyTestKonfa).to receive(:init_with_yaml).once.with(good_file).and_call_original
+      MyTestKonfa.send(:configuration)
+      MyTestKonfa.send(:configuration)
     end
 
-    it "requires all keys in YAML file to be defined in config class by default" do
-      expect {
-        MyTestKonfa.initialize_from_yaml(bad_file)
-      }.to raise_error Konfa::UnsupportedVariableError
-    end
-
-    it "handles Ruby's implicit type conversion" do
-      MyTestKonfa.initialize_from_yaml(bool_file)
-      expect(MyTestKonfa.get :my_var).to be_a(String)
-      expect(MyTestKonfa.get :my_var).to eq 'true'
-    end
-
-    it "is possible to load an empty file" do
+    it 'calls #after_initialize' do
       expect(MyTestKonfa).to receive(:after_initialize)
+      MyTestKonfa.init
+    end
+
+    it 'sets initialized to true' do
       expect {
-        MyTestKonfa.initialize_from_yaml(empty_file)
-      }.not_to raise_error
-      expect(MyTestKonfa.get :my_var).to eq 'default value'
+        MyTestKonfa.init
+      }.to change(MyTestKonfa, :initialized).from(false).to(true)
     end
 
-    it "raises an exception if file does not contain YAML" do
-      expect(MyTestKonfa).to_not receive(:after_initialize)
-      expect {
-        MyTestKonfa.initialize_from_yaml(not_yaml)
-      }.to raise_error(Konfa::InitializationError)
-    end
+    context "without initialize method" do
+      before do
+        MyTestKonfa.send(:initializer=, nil)
+      end
 
-    it "raises an exception if file does not key/value pairs" do
-      expect {
-        MyTestKonfa.initialize_from_yaml(array_file)
-      }.to raise_error(Konfa::InitializationError)
-    end
-  end
-
-  context "#initialize_from_env" do
-
-    it "prefixes environment variables" do
-      expect(MyTestKonfa.env_variable_prefix).to eq 'PREF_'
-    end
-
-    it "can be initialized with environment variables" do
-      begin
-        ENV["PREF_MY_VAR"] = 'set from env'
-        ENV["IGNORE_MY_VAR"]  = 'should be ignored'
-
-        expect {
-          MyTestKonfa.initialize_from_env
-        }.not_to raise_error
-
-        expect(MyTestKonfa.get :my_var).to eq 'set from env'
-      ensure
-        ENV.delete("PREF_MY_VAR")
-        ENV.delete("IGNORE_MY_VAR")
+      it 'should not call #after_initialize' do
+        expect(MyTestKonfa).to_not receive(:after_initialize)
+        MyTestKonfa.init
       end
     end
 
-    it "requires all keys in namespace to be defined in config class by default" do
-      ENV["PREF_BAD_VARIABLE"] = 'should yield an error'
+    context 'when init? returns false' do
+      before :each do
+        allow(MyTestKonfa).to receive(:init?).and_return(false)
+      end
 
-      expect {
-        MyTestKonfa.initialize_from_env
-      }.to raise_error Konfa::UnsupportedVariableError
+      it 'should not alter initialized' do
+        expect {
+          MyTestKonfa.init
+        }.to_not change(MyTestKonfa, :initialized)
+      end
 
-      ENV.delete("PREF_BAD_VARIABLE")
+      it 'should not call initializer method' do
+        expect(MyTestKonfa).to_not receive(:init_with_yaml)
+        MyTestKonfa.init
+      end
+
+      it 'should not call after_initialize' do
+        expect(MyTestKonfa).to_not receive(:after_initialize)
+        MyTestKonfa.init
+      end
     end
   end
 
-  context "#initialize_deferred" do
-    before(:each) do
-      MyTestKonfa.initialize_deferred(:initialize_from_yaml, good_file)
+  context "#init_with" do
+    it 'should set initializer with prefix' do
+      expect {
+        MyTestKonfa.init_with(:something, 'arg')
+      }.to change {
+        MyTestKonfa.send(:initializer)
+      }.from(nil).to([:init_with_something, 'arg'])
     end
 
-    it 'executes initialization method on first call to get' do
-      expect(MyTestKonfa).to receive(:initialize_from_yaml).once.with(good_file).and_call_original
-      MyTestKonfa.get :my_var
-      MyTestKonfa.get :my_var
+    it 'should return self' do
+      expect(MyTestKonfa.init_with(:something)).to eq(MyTestKonfa)
     end
+  end
 
-    it 'populates configuration variables in first call to get' do
-      expect(MyTestKonfa.dump[:my_var]).to eq 'default value'
-      expect(MyTestKonfa.get :my_var).to eq 'read from the yaml file'
-      expect(MyTestKonfa.dump[:my_var]).to eq 'read from the yaml file'
-    end
-
-    it 'executes initialization method if do_deferred_initialization? returns true' do
-      allow(MyTestKonfa).to receive(:do_deferred_initialization?).and_return(true)
-      expect(MyTestKonfa).to receive(:initialize_from_yaml).exactly(2).times.with(good_file)
-
-      MyTestKonfa.get :my_var
-      MyTestKonfa.get :my_var
-    end
-
-    it 'does not execute initialization method if do_deferred_initialization? returns false' do
-      allow(MyTestKonfa).to receive(:do_deferred_initialization?).and_return(false)
-      expect(MyTestKonfa).not_to receive(:initialize_from_yaml)
-
-      MyTestKonfa.get :my_var
+  context "#reinit" do
+    it 'sets initialized to false' do
+      expect(MyTestKonfa).to receive(:initialized=).with(false)
+      MyTestKonfa.reinit
     end
   end
 
@@ -318,15 +276,23 @@ describe Konfa do
     end
   end
 
-  context "#after_initialize" do
-    it "calls after_initialize when initialized from environment" do
-      expect(MyTestKonfa).to receive(:after_initialize)
-      MyTestKonfa.initialize_from_env
+  context "#store" do
+    it "raises an error if trying to store a non-declared variable" do
+      expect {
+        MyTestKonfa.send(:store, 'invalid_variable', 'data')
+      }.to raise_error Konfa::UnsupportedVariableError
     end
 
-    it "calls after_initialize when initialized from yaml" do
-      expect(MyTestKonfa).to receive(:after_initialize)
-      MyTestKonfa.initialize_from_yaml(good_file)
+    it "stores numbers as strings" do
+      MyTestKonfa.send(:store, :my_var, 123)
+      expect(MyTestKonfa.get(:my_var)).to eq('123')
+    end
+
+    it "stores booleans as strings" do
+      MyTestKonfa.send(:store, :my_var, true)
+      expect(MyTestKonfa.get(:my_var)).to eq('true')
+      MyTestKonfa.send(:store, :my_var, false)
+      expect(MyTestKonfa.get(:my_var)).to eq('false')
     end
   end
 
@@ -337,8 +303,8 @@ describe Konfa do
         ENV["OTHER_PREF_MY_VAR"] = 'belongs to MyOtherTestKonfa'
 
         expect {
-          MyTestKonfa.initialize_from_env
-          MyOtherTestKonfa.initialize_from_env
+          MyTestKonfa.init_with(:env).init
+          MyOtherTestKonfa.init_with(:env).init
         }.not_to raise_error
 
         expect(MyTestKonfa.get :my_var).to eq 'belongs to MyTestKonfa'
@@ -350,8 +316,8 @@ describe Konfa do
     end
 
     it 'is possible to initialize them both from config' do
-      MyTestKonfa.initialize_from_yaml(good_file)
-      MyOtherTestKonfa.initialize_from_yaml(bool_file)
+      MyTestKonfa.init_with(:yaml, good_file).init
+      MyOtherTestKonfa.init_with(:yaml, bool_file).init
 
       expect(MyTestKonfa.get :my_var).to eq 'read from the yaml file'
       expect(MyOtherTestKonfa.get :my_var).to eq 'true'
