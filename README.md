@@ -16,7 +16,7 @@ require 'konfa'
 class MyAppConfig < Konfa::Base
   def self.allowed_variables
     {
-      show_stuff: 'yes',             # You can describe what the variable's for here
+      show_stuff: 'yes',             # You can describe what the variable is for here
       stuff_id: nil,                 # ID of the stuff we're using
       lasers: 'off',
       tasers: 'on',
@@ -89,7 +89,7 @@ Konfa does not provide an interface to set values. But if you *really* want to, 
   MyAppConfig.send(:store, :key, 'value')
 ```
 
-This could be useful for testing and, but you really shouldn't set config values from within the application.
+This could be useful for testing, but you really shouldn't set config values from within the application.
 
 with_config
 -----------
@@ -144,7 +144,7 @@ Calling ```init_with(:env)``` populates values from the environment. Konfa will 
 class MyAppConfig < Konfa::Base
 
   def self.env_variable_prefix
-    'MY_APP_'
+    'MYAPP_'
   end
 
   def self.allowed_variables
