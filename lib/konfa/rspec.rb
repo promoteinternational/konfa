@@ -8,6 +8,7 @@ module Konfa
 
       def let_config(variable, value, use_klass=@konfa_klass)
         raise Konfa::UnsupportedVariableError.new(variable) unless use_klass.allowed_variables.has_key?(variable)
+        raise Konfa::RSpec::BadValueError.new(value) unless value.kind_of?(String) || value.kind_of?(NilClass)
 
         unless @konfa_stubbed_klasses.include?(use_klass)
           allow(use_klass).to receive(:get).and_call_original
@@ -21,6 +22,16 @@ module Konfa
         variables.each_pair do |var, val|
           let_config(var, val, use_klass)
         end
+      end
+    end
+
+    class BadValueError < StandardError
+      def initialize(msg)
+        @type = msg.class.name
+      end
+
+      def to_s
+        "Konfa requires values to be of type String (or NilClass), you passed #{@type}"
       end
     end
   end
