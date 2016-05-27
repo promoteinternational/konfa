@@ -72,10 +72,24 @@ describe Konfa::RSpec do
       expect(MyOtherKonfa.get(:my_var_3)).to eq 'other overridden value 3'
     end
 
-    it 'requires value to be of type string' do
-      expect {
-        let_config(:my_var_1, true)
-      }.to raise_error Konfa::RSpec::BadValueError
+    context 'value' do
+      it 'must be of type string' do
+        expect {
+          let_config(:my_var_1, true)
+        }.to raise_error Konfa::RSpec::BadValueError
+      end
+
+      it 'may be a string' do
+        expect {
+          let_config(:my_var_1, 'a string')
+        }.to_not raise_error
+      end
+
+      it 'may be nil' do
+        expect {
+          let_config(:my_var_1, nil)
+        }.to_not raise_error
+      end
     end
   end
 
