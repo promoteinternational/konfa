@@ -5,6 +5,19 @@ module Konfa
     include Konfa::Initializer
 
     class << self
+
+      private
+
+      def default_values
+        self.allowed_variables.each do |key, value|
+          if !value.nil? && !value.kind_of?(String)
+            warn "[DEPRECATION] default value for #{key} will be automatically stringified in future versions"
+          end
+        end
+
+        self.allowed_variables
+      end
+
       protected
 
       #
@@ -21,7 +34,7 @@ module Konfa
 
       def configuration
         self.init
-        @configuration ||= self.allowed_variables
+        @configuration ||= default_values
       end
 
       def initializer

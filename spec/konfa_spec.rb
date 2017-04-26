@@ -9,7 +9,7 @@ class MyTestKonfa < Konfa::Base
     def allowed_variables
       {
         :my_var         => 'default value',
-        :default_is_nil => nil
+        :default_is_nil => nil,
       }
     end
   end
@@ -64,6 +64,8 @@ describe Konfa do
       expect(dumped).not_to equal MyTestKonfa.dump
     end
   end
+
+
 
   context "class configuration" do
     it "does not provide direct access to variable store" do
@@ -273,6 +275,26 @@ describe Konfa do
         expect(MyTestKonfa.true? :my_var).to be true
         expect(MyTestKonfa.false? :my_var).to be false
       end
+    end
+  end
+
+  context "default values" do
+    it "uses value from allowed_variables by default" do
+      expect(MyTestKonfa.get(:my_var)).to eq 'default value'
+    end
+
+    it "allows nil as default value" do
+      expect(MyTestKonfa.get(:default_is_nil)).to be nil
+    end
+
+    it "outputs deprecation warning about non-string values" do
+      allow(MyTestKonfa).to receive(:allowed_variables).and_return({
+        not_a_string: 123
+      })
+
+      expect {
+        expect(MyTestKonfa.get(:not_a_string)).to eq 123
+      }.to output(/DEPRECATION.+not_a_string/).to_stderr
     end
   end
 
