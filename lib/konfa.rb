@@ -83,7 +83,8 @@ module Konfa
       end
 
       def get!(variable)
-        self.get(variable) || raise(NilVariableError.new(variable))
+        raise NilVariableError.new(variable) if self.get(variable).nil?
+        self.get(variable)
       end
 
       def true?(variable)
