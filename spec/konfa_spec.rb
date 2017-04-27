@@ -159,6 +159,17 @@ describe Konfa do
     it 'should return self' do
       expect(MyTestKonfa.init_with(:something)).to eq(MyTestKonfa)
     end
+
+    it 'sets initialized to false' do
+      expect(MyTestKonfa).to receive(:reinit)
+      MyTestKonfa.init_with(:something)
+    end
+
+    it 'subsequent calls to init_with do not require reinit' do
+      MyTestKonfa.init_with(:yaml, good_file).init
+      expect(MyTestKonfa).to receive(:after_initialize)
+      MyTestKonfa.init_with(:yaml, good_file).init
+    end
   end
 
   context "#reinit" do
