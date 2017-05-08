@@ -31,16 +31,16 @@ describe Konfa::AutoDocGenerator::Markdown do
     subject { described_class.new(konfa_class).generate(variables) }
 
     it { is_expected.to match /^# KonfaClass\n/ }
-    it { is_expected.to match /## var_1\nDefault: \*on\*\nThis is an explanation\n\n/ }
-    it { is_expected.to match /## var_2\nDefault: \*off\*\n\n/ }
-    it { is_expected.to match /## var_3\nDefault: \*a string\*\nDocumentation\n\n/ }
-    it { is_expected.to match /## var_4\nDefault: \*nil\*\n\Z/ }
+    it { is_expected.to match /## var_1\n\nDefault: \*on\*\n\nThis is an explanation\n\n/ }
+    it { is_expected.to match /## var_2\n\nDefault: \*off\*\n\n/ }
+    it { is_expected.to match /## var_3\n\nDefault: \*a string\*\n\nDocumentation\n\n/ }
+    it { is_expected.to match /## var_4\n\nDefault: \*nil\*\Z/ }
   end
 
   context "optional verion string" do
     let(:version) { "v2.20" }
     subject { described_class.new(konfa_class, version).generate(variables) }
-    it { is_expected.to match /^# KonfaClass\n\*Version: #{version}\*\n/}
+    it { is_expected.to match /^# KonfaClass\n\n\*Version: #{version}\*\n/}
   end
 
 end
