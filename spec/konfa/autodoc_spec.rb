@@ -170,16 +170,14 @@ describe Konfa::AutoDoc do
   end
 
   context "parse declarations multiline comments" do
-    include_context 'parse test class', KonfaMultiLineComments, 4
-
-    # Note: We currently do support treating multiline comments as one. This
-    # is testing that comments between elements are ignored
+    include_context 'parse test class', KonfaMultiLineComments, 5
 
     it 'found the expect data' do
       expect(subject[0]).to have_attributes(name: 'my_var_1', default: "var 1", comment: "Comment 1")
       expect(subject[1]).to have_attributes(name: 'my_var_2', default: "var 2", comment: "Comment 2... ...continues here")
       expect(subject[2]).to have_attributes(name: 'my_var_3', default: "var 3", comment: "Comment 3 Here is an off comment")
-      expect(subject[3]).to have_attributes(name: 'my_var_4', default: "var 4", comment: "Comment 4")
+      expect(subject[3]).to have_attributes(name: 'my_var_4', default: "false", comment: "If true: this is on If false: this is off")
+      expect(subject[4]).to have_attributes(name: 'my_var_5', default: 'var 5', comment: 'This :comment => looks like a hash declaration')
     end
   end
 end

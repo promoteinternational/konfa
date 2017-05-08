@@ -109,7 +109,10 @@ class KonfaMultiLineComments < Konfa::Base
                                # ...continues here
         :my_var_3 => 'var 3',  # Comment 3
         # Here is an off comment
-        :my_var_4 => 'var 4',  # Comment 4
+        :my_var_4 => 'false',  # If true: this is on
+                               # If false: this is off
+        :my_var_5 => 'var 5',  # This :comment => looks like a hash declaration
+
       }
     end
   end
