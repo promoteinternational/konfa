@@ -199,7 +199,7 @@ describe Konfa do
           expect(MyTestKonfa.get :my_var).to eq 'blah'
           raise Exception.new('This is en error')
         end
-      }.to raise_error
+      }.to raise_error(Exception)
 
       expect(MyTestKonfa.get :my_var).to be test_value
     end
