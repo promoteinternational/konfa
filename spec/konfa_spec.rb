@@ -91,6 +91,30 @@ describe Konfa do
     end
   end
 
+  context '#get!' do
+    it 'can access a variable that is not nil' do
+      expect(MyTestKonfa.get!(:my_var)).to eq 'default value'
+    end
+
+    it 'considers an empty string valid' do
+      MyTestKonfa.with_config(my_var: '') do
+        expect(MyTestKonfa.get!(:my_var)).to eq ''
+      end
+    end
+
+    it "considers the string 'nil' valid" do
+      MyTestKonfa.with_config(my_var: 'nil') do
+        expect(MyTestKonfa.get!(:my_var)).to eq 'nil'
+      end
+    end
+
+    it 'raises an error if the variable is nil' do
+      expect {
+        MyTestKonfa.get! :default_is_nil
+      }.to raise_error Konfa::NilVariableError
+    end
+  end
+
   context "#init" do
     before(:each) do
       MyTestKonfa.init_with(:yaml, good_file)

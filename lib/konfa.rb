@@ -82,6 +82,11 @@ module Konfa
         self.configuration[variable]
       end
 
+      def get!(variable)
+        raise NilVariableError.new(variable) if self.get(variable).nil?
+        self.get(variable)
+      end
+
       def true?(variable)
         self.truthy?(self.get(variable))
       end
@@ -139,6 +144,6 @@ module Konfa
     end
   end
 
-  class UnsupportedVariableError < StandardError
-  end
+  class UnsupportedVariableError < StandardError; end
+  class NilVariableError < StandardError; end
 end
