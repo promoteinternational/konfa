@@ -51,11 +51,6 @@ module Konfa
       variables
     end
 
-    def generate(generator_class, version=nil)
-      generator = generator_class.new(konfa_class, version)
-      generator.generate(variables)
-    end
-
     private
 
     def trim_comment(comment)

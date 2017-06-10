@@ -35,38 +35,6 @@ describe Konfa::AutoDoc do
     end
   end
 
-  context 'generate' do
-    subject { described_class.new(KonfaBasic) }
-    let(:generator) { double }
-
-    before(:each) do
-      allow(generator).to receive(:new).and_return(generator)
-      allow(generator).to receive(:generate)
-    end
-
-    it 'creates instance of generator with konfa_class' do
-      expect(generator).to receive(:new).with(subject.konfa_class, nil)
-      subject.generate(generator)
-    end
-
-    it 'passes optional version string to generator' do
-      the_version = "v1.1.0"
-      expect(generator).to receive(:new).with(subject.konfa_class, the_version)
-      subject.generate(generator, the_version)
-    end
-
-    it 'passes variables to generate' do
-      expect(generator).to receive(:generate).with(subject.variables)
-      subject.generate(generator)
-    end
-
-    it 'returns generators return value' do
-      the_retval = "this was generated"
-      allow(generator).to receive(:generate).and_return(the_retval)
-      expect(subject.generate(generator)).to be the_retval
-    end
-  end
-
   context 'parse' do
     include_context 'parse test class', KonfaBasic, 2
 
