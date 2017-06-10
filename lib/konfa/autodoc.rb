@@ -20,7 +20,7 @@ module Konfa
       )
       \s*
       (?:
-        (?:'|")(.+?)(?:'|")   # 2: A string constant (FIXME: Use Backrefs to match leading and tailing quote)
+        (?:'|")(.+?)(?:'|")   # 2: A string constant (FIXME: unless Backrefs to match leading and tailing quote)
         |                     #   - or -
         ([\w\@\:\.]+)         # 3: Bareword
       )
@@ -61,7 +61,7 @@ module Konfa
     def trim_comment(comment)
       unless comment.nil?
         comment.gsub!(/^\s*|\s*$/x, "")     # The ^ and $ rather than \A and \Z anchors are intentional
-        comment.gsub!(/\n\#\s*/x, " ")      # Not sure if we should perserve line breaks. We currenty no not.
+        comment.gsub!(/\n\#\s*/x, " ")      # Not sure if we should perserve line breaks. We currenty do not. Can be fixed by using a zero width look-behind
       end
       comment
     end
