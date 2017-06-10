@@ -1,8 +1,6 @@
-require 'konfa/autodoc_generator/base'
-
 module Konfa
-  module AutoDocGenerator
-    class Markdown < Base
+  module AutoDoc
+    class Markdown < Formatter
       def format(variables)
         md_lines  = [header(konfa_class.name)]
         md_lines << "*Version: #{version}*" unless version.nil?

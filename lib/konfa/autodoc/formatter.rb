@@ -1,6 +1,6 @@
 module Konfa
-  module AutoDocGenerator
-    class Base
+  module AutoDoc
+    class Formatter
       attr_reader :konfa_class
       attr_accessor :version
 
@@ -10,7 +10,7 @@ module Konfa
       end
 
       def generate
-        autodoc = Konfa::AutoDoc.new(@konfa_class)
+        autodoc = Konfa::AutoDoc::Parser.new(@konfa_class)
         format(autodoc.parse)
       end
 

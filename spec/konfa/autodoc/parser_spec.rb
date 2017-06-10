@@ -1,4 +1,4 @@
-$: << File.join(File.dirname(File.dirname(__FILE__)), "support")
+$: << File.join(File.dirname(File.dirname(__FILE__)), "../support")
 
 require 'konfa_subclasses'
 require 'konfa/autodoc'
@@ -9,7 +9,7 @@ RSpec.shared_context 'parse test class' do |klass, expected_elements|
     @size = expected_elements
   }
 
-  let(:instance) { Konfa::AutoDoc.new(@konfa_class) }
+  let(:instance) { Konfa::AutoDoc::Parser.new(@konfa_class) }
   subject { instance.parse }
   it { is_expected.to all( be_a Struct )}
 
@@ -19,7 +19,7 @@ RSpec.shared_context 'parse test class' do |klass, expected_elements|
 end
 
 
-describe Konfa::AutoDoc do
+describe Konfa::AutoDoc::Parser do
   context 'initialization' do
     subject { described_class.new(KonfaBasic) }
 
@@ -132,7 +132,7 @@ describe Konfa::AutoDoc do
   end
 
   context "no allowed_variables method in sub class" do
-    let(:instance) { Konfa::AutoDoc.new(KonfaNoVariablesMethod) }
+    let(:instance) { described_class.new(KonfaNoVariablesMethod) }
     subject { instance.parse }
     it { is_expected.to eq [] }
   end
