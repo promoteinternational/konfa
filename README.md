@@ -1,6 +1,8 @@
 Konfa
 =====
 
+[![Build Status](https://travis-ci.org/promoteinternational/konfa.svg)](https://travis-ci.org/promoteinternational/konfa)
+
 Facilitates application configuration and tries to address a couple of common issues
 
  * Bugs attributed to misspelt configuration variable names
