@@ -3,6 +3,7 @@
 .bundle
 Gemfile.lock
 .config
+.byebug_history
 coverage
 InstalledFiles
 lib/bundler/man
