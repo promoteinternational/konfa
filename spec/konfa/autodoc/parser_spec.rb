@@ -84,16 +84,13 @@ describe Konfa::AutoDoc::Parser do
   end
 
   context 'parse multiple hash declarations' do
-    skip " - not yet supported" do
-      # Need to refactor the parse to first identify hash blocks, then parse those
-      include_context 'parse test class', KonfaOneLineHash, 4
+    include_context 'parse test class', KonfaMultipleHashes, 4
 
-      it 'found the expect data' do
-        expect(subject[0]).to have_attributes(name: 'my_var_1', default: 'default value', comment: nil)
-        expect(subject[1]).to have_attributes(name: 'my_var_2', default: "nil", comment: nil)
-        expect(subject[2]).to have_attributes(name: 'my_var_3', default: "value 3", comment: nil)
-        expect(subject[3]).to have_attributes(name: 'my_var_4', default: "value 4", comment: nil)
-      end
+    it 'found the expect data' do
+      expect(subject[0]).to have_attributes(name: 'my_var_1', default: 'default value', comment: nil)
+      expect(subject[1]).to have_attributes(name: 'my_var_2', default: "nil", comment: 'Some comment here that continues')
+      expect(subject[2]).to have_attributes(name: 'my_var_3', default: "value 3", comment: 'Comment here')
+      expect(subject[3]).to have_attributes(name: 'my_var_4', default: "value 4", comment: nil)
     end
   end
 

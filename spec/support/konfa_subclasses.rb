@@ -33,7 +33,8 @@ class KonfaMultipleHashes < Konfa::Base
     def allowed_variables
       hash_1 = {
         :my_var_1 => 'default value',
-        :my_var_2 => nil,
+        :my_var_2 => nil,       # Some comment here
+                                # that continues
       }
       hash_2 = {
         :my_var_3 => 'value 3',   # Comment here
