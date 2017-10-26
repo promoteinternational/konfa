@@ -10,6 +10,9 @@ class MyTestKonfa < Konfa::Base
       {
         :my_var         => 'default value',
         :default_is_nil => nil,
+        :foo => nil,
+        :bar => nil,
+        :baz => nil
       }
     end
   end
@@ -373,6 +376,17 @@ describe Konfa do
       it 'calls the initializer' do
         expect(MyTestKonfa).to receive(:init_with_yaml).with(good_file)
         subject
+      end
+    end
+
+    context 'multiple config files' do
+      before(:each) do
+        MyTestKonfa.read_from(:yaml, File.expand_path("../support/initial_config.yaml", __FILE__))
+        MyTestKonfa.read_from(:yaml, File.expand_path("../support/overrides.yaml", __FILE__))
+      end
+
+      it 'merges config vars' do
+        expect(MyTestKonfa.dump).to include({ foo: 'overrides initial config foo var', bar: 'bar', baz: 'baz' })
       end
     end
 
