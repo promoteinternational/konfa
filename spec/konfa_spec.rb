@@ -369,4 +369,72 @@ describe Konfa do
       expect(MyOtherTestKonfa.get :my_var).to eq 'true'
     end
   end
+
+
+  context "#read_from" do
+    subject { MyTestKonfa.read_from(initializer, good_file) }
+
+    context 'valid initializer' do
+      let(:initializer) { :yaml }
+
+      it { is_expected.to eq MyTestKonfa }
+
+      it 'calls the initializer' do
+        expect(MyTestKonfa).to receive(:init_with_yaml).with(good_file)
+        subject
+      end
+    end
+
+    context 'invalid initializer' do
+      let(:initializer) { :foobar }
+
+      it 'raises error' do
+        expect {
+          subject
+        }.to raise_error(Konfa::UnsupportedInitializerError)
+      end
+    end
+  end
+
+  context '#initialized!' do
+    subject { MyTestKonfa.initialized! }
+
+    it 'sets initialized to true' do
+      expect {
+        subject
+      }.to change { MyTestKonfa.initialized? }.from(false).to(true)
+    end
+
+    it 'calls after_initialize' do
+      expect(MyTestKonfa).to receive(:after_initialize)
+      subject
+    end
+
+    it 'returns self' do
+      expect(subject).to eq MyTestKonfa
+    end
+
+    context 'when already initialized' do
+      before(:each) { allow(MyTestKonfa).to receive(:initialized?).and_return(true) }
+
+      it 'does not run' do
+        expect(MyTestKonfa).not_to receive(:after_initialize)
+        expect(subject).to be_nil
+      end
+    end
+  end
+
+  context '#initialized?' do
+    subject { MyTestKonfa }
+
+    context 'when not initialized' do
+      it { is_expected.not_to be_initialized }
+    end
+
+    context 'when already initialized' do
+      before(:each) { MyTestKonfa.initialized! }
+
+      it { is_expected.to be_initialized }
+    end
+  end
 end

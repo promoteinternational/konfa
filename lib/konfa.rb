@@ -125,6 +125,23 @@ module Konfa
         self.initialized = false
       end
 
+      def read_from(initializer, file)
+        raise UnsupportedInitializerError unless self.respond_to?(:"init_with_#{initializer}")
+        self.send(:"init_with_#{initializer}", file)
+        self
+      end
+
+      def initialized!
+        return if self.initialized?
+        @initialized = true
+        self.after_initialize
+        self
+      end
+
+      def initialized?
+        @initialized == true
+      end
+
       def after_initialize
       end
 
@@ -144,6 +161,7 @@ module Konfa
     end
   end
 
+  class UnsupportedInitializerError < StandardError; end
   class UnsupportedVariableError < StandardError; end
   class NilVariableError < StandardError; end
 end
