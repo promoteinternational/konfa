@@ -428,4 +428,14 @@ describe Konfa do
       it { is_expected.to be_initialized }
     end
   end
+
+  context '#initialize!' do
+    subject { MyTestKonfa.initialize!(:yaml, good_file) }
+
+    it 'loads the config and initializes' do
+      expect(MyTestKonfa).to receive(:read_from).with(:yaml, good_file)
+      expect(MyTestKonfa).to receive(:initialized!)
+      subject
+    end
+  end
 end

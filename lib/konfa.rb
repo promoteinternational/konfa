@@ -147,6 +147,11 @@ module Konfa
         self
       end
 
+      def initialize!(initializer, file)
+        self.read_from(initializer, file)
+        self.initialized!
+      end
+
       def initialized?
         @initialized == true
       end
