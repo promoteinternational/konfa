@@ -35,6 +35,7 @@ describe Konfa do
   let(:good_file)  { File.expand_path("../support/good_config.yaml", __FILE__) }
 
   before(:each) do
+    MyTestKonfa.deprecation_warnings = false
     MyTestKonfa.reinit
     MyTestKonfa.send(:initializer=, nil)
     MyTestKonfa.send(:configuration=, nil)
@@ -309,16 +310,6 @@ describe Konfa do
 
     it "allows nil as default value" do
       expect(MyTestKonfa.get(:default_is_nil)).to be nil
-    end
-
-    it "outputs deprecation warning about non-string values" do
-      allow(MyTestKonfa).to receive(:allowed_variables).and_return({
-        not_a_string: 123
-      })
-
-      expect {
-        expect(MyTestKonfa.get(:not_a_string)).to eq 123
-      }.to output(/DEPRECATION.+not_a_string/).to_stderr
     end
   end
 

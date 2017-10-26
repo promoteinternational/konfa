@@ -1,8 +1,10 @@
 require_relative File.join(File.dirname(__FILE__), 'konfa', 'initializer')
+require_relative File.join(File.dirname(__FILE__), 'konfa', 'deprecation')
 
 module Konfa
   class Base
     include Konfa::Initializer
+    include Konfa::Deprecation
 
     class << self
 
@@ -11,7 +13,7 @@ module Konfa
       def default_values
         self.allowed_variables.each do |key, value|
           if !value.nil? && !value.kind_of?(String)
-            warn "[DEPRECATION] default value for #{key} will be automatically stringified in future versions"
+            deprecated "[DEPRECATION] default value for #{key} will be automatically stringified in future versions"
           end
         end
 
@@ -106,11 +108,13 @@ module Konfa
       end
 
       def init?
-        warn "[DEPRECATION] init? will be removed in Konfa 1.0, use initialized? instead"
+        deprecated "[DEPRECATION] init? will be removed in Konfa 1.0, use initialized? instead"
         !self.initialized && !self.initializer.nil?
       end
 
       def init
+        deprecated "[DEPRECATION] This style of initialization will no longer be supported in Konfa 1.0 and init "\
+                   "will be removed. Use initialize! or read_from/initialized! instead"
         return unless self.init?
         # Set to true before calling to prevent recursion if
         # an initializer is accessing the configuration
@@ -120,13 +124,13 @@ module Konfa
       end
 
       def init_with(suffix, *args)
-        warn "[DEPRECATION] This style of initialization will be removed in Konfa 1.0. Use read_from+initialized! instead"
+        deprecated "[DEPRECATION] init will be removed in Konfa 1.0. Use read_from instead"
         self.initializer = [:"init_with_#{suffix}", *args]
         self
       end
 
       def reinit
-        warn "[DEPRECATION] reinit will be removed in Konfa 1.0. Use read_from to load multiple config files"
+        deprecated "[DEPRECATION] reinit will be removed in Konfa 1.0. Use read_from to load multiple config files"
         self.initialized = false
       end
 
