@@ -28,6 +28,7 @@ module Konfa
 
       attr_writer :configuration, :initializer, :initialized
 
+      # [DEPRECATED] This method will be removed in favor of initialized? in Konfa 1.0
       def initialized
         @initialized ||= false
       end
@@ -37,6 +38,7 @@ module Konfa
         @configuration ||= default_values
       end
 
+      # [DEPRECATED] This attribute will be removed in Konfa 1.0
       def initializer
         @initializer ||= nil
       end
@@ -104,6 +106,7 @@ module Konfa
       end
 
       def init?
+        warn "[DEPRECATION] init? will be removed in Konfa 1.0, use initialized? instead"
         !self.initialized && !self.initializer.nil?
       end
 
@@ -117,11 +120,13 @@ module Konfa
       end
 
       def init_with(suffix, *args)
+        warn "[DEPRECATION] This style of initialization will be removed in Konfa 1.0. Use read_from+initialized! instead"
         self.initializer = [:"init_with_#{suffix}", *args]
         self
       end
 
       def reinit
+        warn "[DEPRECATION] reinit will be removed in Konfa 1.0. Use read_from to load multiple config files"
         self.initialized = false
       end
 
