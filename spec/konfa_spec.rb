@@ -424,7 +424,7 @@ describe Konfa do
 
       it 'does not run' do
         expect(MyTestKonfa).not_to receive(:after_initialize)
-        expect(subject).to be_nil
+        expect(subject).to eq MyTestKonfa
       end
     end
   end

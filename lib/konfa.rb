@@ -141,9 +141,11 @@ module Konfa
       end
 
       def initialized!
-        return if self.initialized?
-        @initialized = true
-        self.after_initialize
+        unless self.initialized?
+          @initialized = true
+          self.after_initialize
+        end
+
         self
       end
 
