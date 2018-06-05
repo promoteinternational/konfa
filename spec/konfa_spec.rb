@@ -10,6 +10,9 @@ class MyTestKonfa < Konfa::Base
       {
         :my_var         => 'default value',
         :default_is_nil => nil,
+        :foo => nil,
+        :bar => nil,
+        :baz => nil
       }
     end
   end
@@ -35,6 +38,7 @@ describe Konfa do
   let(:good_file)  { File.expand_path("../support/good_config.yaml", __FILE__) }
 
   before(:each) do
+    MyTestKonfa.deprecation_warnings = false
     MyTestKonfa.reinit
     MyTestKonfa.send(:initializer=, nil)
     MyTestKonfa.send(:configuration=, nil)
@@ -310,16 +314,6 @@ describe Konfa do
     it "allows nil as default value" do
       expect(MyTestKonfa.get(:default_is_nil)).to be nil
     end
-
-    it "outputs deprecation warning about non-string values" do
-      allow(MyTestKonfa).to receive(:allowed_variables).and_return({
-        not_a_string: 123
-      })
-
-      expect {
-        expect(MyTestKonfa.get(:not_a_string)).to eq 123
-      }.to output(/DEPRECATION.+not_a_string/).to_stderr
-    end
   end
 
   context "#store" do
@@ -367,6 +361,95 @@ describe Konfa do
 
       expect(MyTestKonfa.get :my_var).to eq 'read from the yaml file'
       expect(MyOtherTestKonfa.get :my_var).to eq 'true'
+    end
+  end
+
+
+  context "#read_from" do
+    subject { MyTestKonfa.read_from(initializer, good_file) }
+
+    context 'valid initializer' do
+      let(:initializer) { :yaml }
+
+      it { is_expected.to eq MyTestKonfa }
+
+      it 'calls the initializer' do
+        expect(MyTestKonfa).to receive(:init_with_yaml).with(good_file)
+        subject
+      end
+    end
+
+    context 'multiple config files' do
+      before(:each) do
+        MyTestKonfa.read_from(:yaml, File.expand_path("../support/initial_config.yaml", __FILE__))
+        MyTestKonfa.read_from(:yaml, File.expand_path("../support/overrides.yaml", __FILE__))
+      end
+
+      it 'merges config vars' do
+        expect(MyTestKonfa.dump).to include({ foo: 'overrides initial config foo var', bar: 'bar', baz: 'baz' })
+      end
+    end
+
+    context 'invalid initializer' do
+      let(:initializer) { :foobar }
+
+      it 'raises error' do
+        expect {
+          subject
+        }.to raise_error(Konfa::UnsupportedInitializerError)
+      end
+    end
+  end
+
+  context '#initialized!' do
+    subject { MyTestKonfa.initialized! }
+
+    it 'sets initialized to true' do
+      expect {
+        subject
+      }.to change { MyTestKonfa.initialized? }.from(false).to(true)
+    end
+
+    it 'calls after_initialize' do
+      expect(MyTestKonfa).to receive(:after_initialize)
+      subject
+    end
+
+    it 'returns self' do
+      expect(subject).to eq MyTestKonfa
+    end
+
+    context 'when already initialized' do
+      before(:each) { allow(MyTestKonfa).to receive(:initialized?).and_return(true) }
+
+      it 'does not run' do
+        expect(MyTestKonfa).not_to receive(:after_initialize)
+        expect(subject).to eq MyTestKonfa
+      end
+    end
+  end
+
+  context '#initialized?' do
+    subject { MyTestKonfa }
+
+    context 'when not initialized' do
+      it { is_expected.not_to be_initialized }
+    end
+
+    context 'when already initialized' do
+      before(:each) { MyTestKonfa.initialized! }
+
+      it { is_expected.to be_initialized }
+    end
+  end
+
+  context '#initialize!' do
+    subject { MyTestKonfa.initialize!(:yaml, good_file) }
+
+    it 'loads the config and initializes' do
+      expect(MyTestKonfa).to receive(:read_from).with(:yaml, good_file)
+      expect(MyTestKonfa).to receive(:initialized!)
+      subject
     end
   end
 end
