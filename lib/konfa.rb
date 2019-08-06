@@ -149,8 +149,8 @@ module Konfa
         self
       end
 
-      def initialize!(initializer, file)
-        self.read_from(initializer, file)
+      def initialize!(initializer, *files)
+        self.read_from(initializer, *files)
         self.initialized!
       end
 

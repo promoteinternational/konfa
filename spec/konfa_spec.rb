@@ -485,7 +485,15 @@ describe Konfa do
     it 'loads the config and initializes' do
       expect(MyTestKonfa).to receive(:read_from).with(:yaml, good_file)
       expect(MyTestKonfa).to receive(:initialized!)
-      subject
+
+      MyTestKonfa.initialize!(:yaml, good_file)
+    end
+
+    it 'accepts multiple files' do
+      expect(MyTestKonfa).to receive(:read_from).with(:yaml, initial_file, overrides_file).once
+      expect(MyTestKonfa).to receive(:initialized!).once
+
+      MyTestKonfa.initialize!(:yaml, initial_file, overrides_file)
     end
   end
 end
