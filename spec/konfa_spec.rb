@@ -380,13 +380,52 @@ describe Konfa do
     end
 
     context 'multiple config files' do
-      before(:each) do
-        MyTestKonfa.read_from(:yaml, File.expand_path("../support/initial_config.yaml", __FILE__))
-        MyTestKonfa.read_from(:yaml, File.expand_path("../support/overrides.yaml", __FILE__))
+      context 'with multiple calls' do
+        it 'merges config vars' do
+          MyTestKonfa.read_from(:yaml, File.expand_path("../support/initial_config.yaml", __FILE__))
+          MyTestKonfa.read_from(:yaml, File.expand_path("../support/overrides.yaml", __FILE__))
+
+          expect(MyTestKonfa.dump).to include({
+            foo: 'overrides initial config foo var',
+            bar: 'bar',
+            baz: 'baz'
+          })
+        end
+
+        it 'overrides configs in the order it is called' do
+          MyTestKonfa.read_from(:yaml, File.expand_path("../support/overrides.yaml", __FILE__))
+          MyTestKonfa.read_from(:yaml, File.expand_path("../support/initial_config.yaml", __FILE__))
+
+          expect(MyTestKonfa.dump).to include({
+            foo: 'foo',
+            bar: 'bar',
+            baz: 'baz'
+          })
+        end
       end
 
-      it 'merges config vars' do
-        expect(MyTestKonfa.dump).to include({ foo: 'overrides initial config foo var', bar: 'bar', baz: 'baz' })
+      context 'when called with multiple files' do
+        it 'merges config vars' do
+          MyTestKonfa.read_from(:yaml, File.expand_path("../support/initial_config.yaml", __FILE__),
+                                       File.expand_path("../support/overrides.yaml", __FILE__))
+
+          expect(MyTestKonfa.dump).to include({
+            foo: 'overrides initial config foo var',
+            bar: 'bar',
+            baz: 'baz'
+          })
+        end
+
+        it 'overrides according to files argument order' do
+          MyTestKonfa.read_from(:yaml, File.expand_path("../support/overrides.yaml", __FILE__),
+                                       File.expand_path("../support/initial_config.yaml", __FILE__))
+
+          expect(MyTestKonfa.dump).to include({
+            foo: 'foo',
+            bar: 'bar',
+            baz: 'baz'
+          })
+        end
       end
     end
 
