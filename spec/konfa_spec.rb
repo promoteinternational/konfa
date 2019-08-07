@@ -34,8 +34,10 @@ class MyOtherTestKonfa < Konfa::Base
 end
 
 describe Konfa do
-  let(:bool_file)  { File.expand_path("../support/bool_config.yaml", __FILE__) }
-  let(:good_file)  { File.expand_path("../support/good_config.yaml", __FILE__) }
+  let(:bool_file)  { File.expand_path('../support/bool_config.yaml', __FILE__) }
+  let(:good_file)  { File.expand_path('../support/good_config.yaml', __FILE__) }
+  let(:initial_file) { File.expand_path('../support/initial_config.yaml', __FILE__) }
+  let(:overrides_file) { File.expand_path('../support/overrides.yaml', __FILE__) }
 
   before(:each) do
     MyTestKonfa.deprecation_warnings = false
@@ -47,40 +49,38 @@ describe Konfa do
     MyOtherTestKonfa.send(:configuration=, nil)
   end
 
-  context "#variables" do
-    it "can list available configuration variables" do
+  describe '.variables' do
+    it 'can list available configuration variables' do
       expect(MyTestKonfa.variables).to be_kind_of Array
     end
 
-    it "presents all variable keys as symbols" do
+    it 'presents all variable keys as symbols' do
       expect(MyTestKonfa.variables.all? {|v| v.kind_of? Symbol }).to be true
     end
   end
 
-  context "#dump" do
-    it "can dump all existing variables and values" do
+  describe '.dump' do
+    it 'can dump all existing variables and values' do
       expect(MyTestKonfa.dump).to be_kind_of Hash
       expect(MyTestKonfa.dump.keys).to eq MyTestKonfa.variables
     end
 
-    it "dupes the current state" do
+    it 'dupes the current state' do
       dumped = MyTestKonfa.dump
       expect(dumped).not_to equal MyTestKonfa.dump
     end
   end
 
-
-
-  context "class configuration" do
-    it "does not provide direct access to variable store" do
+  context 'class configuration' do
+    it 'does not provide direct access to variable store' do
       expect {
         MyTestKonfa.configuration
       }.to raise_error(NoMethodError)
     end
   end
 
-  context "#get" do
-    it "all variables can be accessed" do
+  describe '.get' do
+    it 'all variables can be accessed' do
       MyTestKonfa.variables.each do |variable|
         expect {
           MyTestKonfa.get(variable)
@@ -88,14 +88,14 @@ describe Konfa do
       end
     end
 
-    it "raises an exception if unknown configuration variable is accessed" do
+    it 'raises an exception if unknown configuration variable is accessed' do
       expect {
         MyTestKonfa.get :_this_is_totally_wrong
       }.to raise_error Konfa::UnsupportedVariableError
     end
   end
 
-  context '#get!' do
+  describe '.get!' do
     it 'can access a variable that is not nil' do
       expect(MyTestKonfa.get!(:my_var)).to eq 'default value'
     end
@@ -119,7 +119,7 @@ describe Konfa do
     end
   end
 
-  context "#init" do
+  describe '.init' do
     before(:each) do
       MyTestKonfa.init_with(:yaml, good_file)
     end
@@ -141,7 +141,7 @@ describe Konfa do
       }.to change(MyTestKonfa, :initialized).from(false).to(true)
     end
 
-    context "without initialize method" do
+    context 'without initialize method' do
       before do
         MyTestKonfa.send(:initializer=, nil)
       end
@@ -175,7 +175,7 @@ describe Konfa do
     end
   end
 
-  context "#init_with" do
+  describe '.init_with' do
     it 'should set initializer with prefix' do
       expect {
         MyTestKonfa.init_with(:something, 'arg')
@@ -189,14 +189,14 @@ describe Konfa do
     end
   end
 
-  context "#reinit" do
+  describe '.reinit' do
     it 'sets initialized to false' do
       expect(MyTestKonfa).to receive(:initialized=).with(false)
       MyTestKonfa.reinit
     end
   end
 
-  context "#with_config" do
+  describe '.with_config' do
 
     let(:test_value) { 'my test value' }
 
@@ -204,7 +204,7 @@ describe Konfa do
       MyTestKonfa.send(:store, :my_var, test_value)
     end
 
-    it "prevents existing values to be over written" do
+    it 'prevents existing values to be over written' do
       MyTestKonfa.with_config(my_var: 'blah') do
         expect(MyTestKonfa.get :my_var).to eq 'blah'
       end
@@ -212,7 +212,7 @@ describe Konfa do
       expect(MyTestKonfa.get :my_var).to be test_value
     end
 
-    it "drops any new values set in block" do
+    it 'drops any new values set in block' do
       MyTestKonfa.with_config do
         MyTestKonfa.send(:store, :my_var, 'blah')
         expect(MyTestKonfa.get :my_var).to eq 'blah'
@@ -221,7 +221,7 @@ describe Konfa do
       expect(MyTestKonfa.get :my_var).to be test_value
     end
 
-    it "works even if an exception is raised" do
+    it 'works even if an exception is raised' do
       expect {
         MyTestKonfa.with_config(my_var: 'blah') do
           expect(MyTestKonfa.get :my_var).to eq 'blah'
@@ -232,7 +232,7 @@ describe Konfa do
       expect(MyTestKonfa.get :my_var).to be test_value
     end
 
-    it "works with multiple values" do
+    it 'works with multiple values' do
       MyTestKonfa.with_config(my_var: 'my new value', default_is_nil: 'a val') do
         expect(MyTestKonfa.get :my_var).to eq 'my new value'
         expect(MyTestKonfa.get :default_is_nil).to eq 'a val'
@@ -241,7 +241,7 @@ describe Konfa do
       expect(MyTestKonfa.get :default_is_nil).not_to eq 'a val'
     end
 
-    it "returns the result of the block" do
+    it 'returns the result of the block' do
       retval = MyTestKonfa.with_config(:my_var => 'my new value') do
         MyTestKonfa.get(:my_var)
       end
@@ -251,25 +251,25 @@ describe Konfa do
     end
   end
 
-  context "#true? and #false?" do
-    it "implements a shorthand for boolean operations" do
+  describe '.true? and #false?' do
+    it 'implements a shorthand for boolean operations' do
       expect(MyTestKonfa).to respond_to(:'true?')
       expect(MyTestKonfa).to respond_to(:'false?')
     end
 
-    it "raises an exception for true? if variable does not exist" do
+    it 'raises an exception for true? if variable does not exist' do
       expect {
         MyTestKonfa.true?(:does_not_exist)
       }.to raise_error(Konfa::UnsupportedVariableError)
     end
 
-    it "raises an exception for false? if variable does not exist" do
+    it 'raises an exception for false? if variable does not exist' do
       expect {
         MyTestKonfa.false?(:does_not_exist)
       }.to raise_error(Konfa::UnsupportedVariableError)
     end
 
-    it "considers values 1, yes or true to be true" do
+    it 'considers values 1, yes or true to be true' do
       ['true', '1', 'yes', 'on'].each do |truthy|
         MyTestKonfa.send(:store, :my_var, truthy)
 
@@ -278,7 +278,7 @@ describe Konfa do
       end
     end
 
-    it "considers nil or any value other than 1, yes or true to be false" do
+    it 'considers nil or any value other than 1, yes or true to be false' do
       [nil, '0', 'false', 'blah', 'NOT TRUE'].each do |falsy|
         MyTestKonfa.send(:store, :my_var, falsy)
 
@@ -287,7 +287,7 @@ describe Konfa do
       end
     end
 
-    it "is case insensitive" do
+    it 'is case insensitive' do
       ['True', 'trUe', 'yEs', 'YES', 'oN'].each do |truthy|
         MyTestKonfa.send(:store, :my_var, truthy)
 
@@ -296,7 +296,7 @@ describe Konfa do
       end
     end
 
-    it "ignores whitespace" do
+    it 'ignores whitespace' do
       ['    true', ' on ', '1    '].each do |truthy|
         MyTestKonfa.send(:store, :my_var, truthy)
 
@@ -306,29 +306,29 @@ describe Konfa do
     end
   end
 
-  context "default values" do
-    it "uses value from allowed_variables by default" do
+  context 'default values' do
+    it 'uses value from allowed_variables by default' do
       expect(MyTestKonfa.get(:my_var)).to eq 'default value'
     end
 
-    it "allows nil as default value" do
+    it 'allows nil as default value' do
       expect(MyTestKonfa.get(:default_is_nil)).to be nil
     end
   end
 
-  context "#store" do
-    it "raises an error if trying to store a non-declared variable" do
+  describe '.store' do
+    it 'raises an error if trying to store a non-declared variable' do
       expect {
         MyTestKonfa.send(:store, 'invalid_variable', 'data')
       }.to raise_error Konfa::UnsupportedVariableError
     end
 
-    it "stores numbers as strings" do
+    it 'stores numbers as strings' do
       MyTestKonfa.send(:store, :my_var, 123)
       expect(MyTestKonfa.get(:my_var)).to eq('123')
     end
 
-    it "stores booleans as strings" do
+    it 'stores booleans as strings' do
       MyTestKonfa.send(:store, :my_var, true)
       expect(MyTestKonfa.get(:my_var)).to eq('true')
       MyTestKonfa.send(:store, :my_var, false)
@@ -336,11 +336,11 @@ describe Konfa do
     end
   end
 
-  context "when declaring multiple sub classes" do
+  context 'when declaring multiple sub classes' do
     it 'is possible to initialize them both from env' do
       begin
-        ENV["PREF_MY_VAR"]       = 'belongs to MyTestKonfa'
-        ENV["OTHER_PREF_MY_VAR"] = 'belongs to MyOtherTestKonfa'
+        ENV['PREF_MY_VAR']       = 'belongs to MyTestKonfa'
+        ENV['OTHER_PREF_MY_VAR'] = 'belongs to MyOtherTestKonfa'
 
         expect {
           MyTestKonfa.init_with(:env).init
@@ -350,8 +350,8 @@ describe Konfa do
         expect(MyTestKonfa.get :my_var).to eq 'belongs to MyTestKonfa'
         expect(MyOtherTestKonfa.get :my_var).to eq 'belongs to MyOtherTestKonfa'
       ensure
-        ENV.delete("PREF_MY_VAR")
-        ENV.delete("OTHER_PREF_MY_VAR")
+        ENV.delete('PREF_MY_VAR')
+        ENV.delete('OTHER_PREF_MY_VAR')
       end
     end
 
@@ -364,8 +364,7 @@ describe Konfa do
     end
   end
 
-
-  context "#read_from" do
+  describe '.read_from' do
     subject { MyTestKonfa.read_from(initializer, good_file) }
 
     context 'valid initializer' do
@@ -380,13 +379,50 @@ describe Konfa do
     end
 
     context 'multiple config files' do
-      before(:each) do
-        MyTestKonfa.read_from(:yaml, File.expand_path("../support/initial_config.yaml", __FILE__))
-        MyTestKonfa.read_from(:yaml, File.expand_path("../support/overrides.yaml", __FILE__))
+      context 'with multiple calls' do
+        it 'merges config vars' do
+          MyTestKonfa.read_from(:yaml, initial_file)
+          MyTestKonfa.read_from(:yaml, overrides_file)
+
+          expect(MyTestKonfa.dump).to include({
+            foo: 'overrides initial config foo var',
+            bar: 'bar',
+            baz: 'baz'
+          })
+        end
+
+        it 'overrides configs in the order it is called' do
+          MyTestKonfa.read_from(:yaml, overrides_file)
+          MyTestKonfa.read_from(:yaml, initial_file)
+
+          expect(MyTestKonfa.dump).to include({
+            foo: 'foo',
+            bar: 'bar',
+            baz: 'baz'
+          })
+        end
       end
 
-      it 'merges config vars' do
-        expect(MyTestKonfa.dump).to include({ foo: 'overrides initial config foo var', bar: 'bar', baz: 'baz' })
+      context 'when called with multiple files' do
+        it 'merges config vars' do
+          MyTestKonfa.read_from(:yaml, initial_file, overrides_file)
+
+          expect(MyTestKonfa.dump).to include({
+            foo: 'overrides initial config foo var',
+            bar: 'bar',
+            baz: 'baz'
+          })
+        end
+
+        it 'overrides according to files argument order' do
+          MyTestKonfa.read_from(:yaml, overrides_file, initial_file)
+
+          expect(MyTestKonfa.dump).to include({
+            foo: 'foo',
+            bar: 'bar',
+            baz: 'baz'
+          })
+        end
       end
     end
 
@@ -401,7 +437,7 @@ describe Konfa do
     end
   end
 
-  context '#initialized!' do
+  describe '.initialized!' do
     subject { MyTestKonfa.initialized! }
 
     it 'sets initialized to true' do
@@ -429,7 +465,7 @@ describe Konfa do
     end
   end
 
-  context '#initialized?' do
+  describe '.initialized?' do
     subject { MyTestKonfa }
 
     context 'when not initialized' do
@@ -443,13 +479,21 @@ describe Konfa do
     end
   end
 
-  context '#initialize!' do
+  describe '.initialize!' do
     subject { MyTestKonfa.initialize!(:yaml, good_file) }
 
     it 'loads the config and initializes' do
       expect(MyTestKonfa).to receive(:read_from).with(:yaml, good_file)
       expect(MyTestKonfa).to receive(:initialized!)
-      subject
+
+      MyTestKonfa.initialize!(:yaml, good_file)
+    end
+
+    it 'accepts multiple files' do
+      expect(MyTestKonfa).to receive(:read_from).with(:yaml, initial_file, overrides_file).once
+      expect(MyTestKonfa).to receive(:initialized!).once
+
+      MyTestKonfa.initialize!(:yaml, initial_file, overrides_file)
     end
   end
 end
