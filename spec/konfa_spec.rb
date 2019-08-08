@@ -365,17 +365,20 @@ describe Konfa do
   end
 
   describe '.read_from' do
-    subject { MyTestKonfa.read_from(initializer, good_file) }
+    it 'returns self' do
+      expect(MyTestKonfa.read_from(:yaml, good_file)).to eq MyTestKonfa
+    end
 
-    context 'valid initializer' do
-      let(:initializer) { :yaml }
+    it 'calls the initializer with config file' do
+      expect(MyTestKonfa).to receive(:init_with_yaml).with(good_file)
 
-      it { is_expected.to eq MyTestKonfa }
+      MyTestKonfa.read_from(:yaml, good_file)
+    end
 
-      it 'calls the initializer' do
-        expect(MyTestKonfa).to receive(:init_with_yaml).with(good_file)
-        subject
-      end
+    it 'calls the initializer without arguments' do
+      expect(MyTestKonfa).to receive(:init_with_env).with(no_args)
+
+      MyTestKonfa.read_from(:env)
     end
 
     context 'multiple config files' do
@@ -426,14 +429,10 @@ describe Konfa do
       end
     end
 
-    context 'invalid initializer' do
-      let(:initializer) { :foobar }
-
-      it 'raises error' do
-        expect {
-          subject
-        }.to raise_error(Konfa::UnsupportedInitializerError)
-      end
+    it 'with invalid initializer raises error' do
+      expect {
+        MyTestKonfa.read_from(:foobar, good_file)
+      }.to raise_error(Konfa::UnsupportedInitializerError)
     end
   end
 
@@ -480,8 +479,6 @@ describe Konfa do
   end
 
   describe '.initialize!' do
-    subject { MyTestKonfa.initialize!(:yaml, good_file) }
-
     it 'loads the config and initializes' do
       expect(MyTestKonfa).to receive(:read_from).with(:yaml, good_file)
       expect(MyTestKonfa).to receive(:initialized!)
@@ -494,6 +491,13 @@ describe Konfa do
       expect(MyTestKonfa).to receive(:initialized!).once
 
       MyTestKonfa.initialize!(:yaml, initial_file, overrides_file)
+    end
+
+    it 'accepts just an initializer' do
+      expect(MyTestKonfa).to receive(:read_from).with(:env)
+      expect(MyTestKonfa).to receive(:initialized!)
+
+      MyTestKonfa.initialize!(:env)
     end
   end
 end

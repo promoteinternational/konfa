@@ -136,7 +136,13 @@ module Konfa
 
       def read_from(initializer, *files)
         raise UnsupportedInitializerError unless self.respond_to?(:"init_with_#{initializer}")
-        files.each { |file| self.send(:"init_with_#{initializer}", file) }
+
+        if files.empty?
+          self.send(:"init_with_#{initializer}")
+        else
+          files.each { |file| self.send(:"init_with_#{initializer}", file) }
+        end
+
         self
       end
 
