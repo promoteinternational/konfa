@@ -28,7 +28,7 @@ end
 
 # ... somewhere early in execution ..."
 
-MyAppConfig.init_with(:yaml, 'config/values.yaml')
+MyAppConfig.read_from(:yaml, 'config/values.yaml')
 
 # ... later on in the app ...
 
@@ -139,7 +139,7 @@ configuration that may disrupt subsequent examples.
 
 Populate with values from environment
 -------------------------------------
-Calling ```init_with(:env)``` populates values from the environment. Konfa will only import variables with a specific prefix to avoid collisions with existing variables.
+Calling ```read_from(:env)``` populates values from the environment. Konfa will only import variables with a specific prefix to avoid collisions with existing variables.
 
 ```ruby
 # in myapp.rb
@@ -157,7 +157,7 @@ class MyAppConfig < Konfa::Base
   end
 end
 
-MyAppConfig.init_with(:env)
+MyAppConfig.read_from(:env)
 
 puts "I speak #{MyAppConfig.get(:lang)} and I will #{MyAppConfig.true?(:show_stuff) ? "" : "not"} show stuff"
 ```
@@ -216,17 +216,17 @@ Notes on initializing
 
 ## Initialization is deferred by default
 
-Konfa will initialize its values when a variable is first read (when for instance
-calling `get`, `true?` or `dump`). Initialization can be triggered earlier by calling
-the `init`method.
+Konfa will initialize its values as late as possible, in other words, when a
+variable is first read (when for instance calling `get`, `true?` or `dump`).
+However, it's recommended to trigger the initialization as early as possible,
+as it will then fail early if bad configuration values are found.
 
 The default behaviour:
 
 ```ruby
+MyAppConfig.read_from(:yaml, 'path_to_yaml_file')
 
-MyAppConfig.init_with(:yaml, 'path_to_yaml_file')
-
-# ... things happens, and later on in the execution:
+# ... things happen, and later on in the execution:
 
 MyAppConfig.get(:my_var) # Konfa will read the yaml file, populate the
                          # configuration and then return the value of `my_var`
@@ -235,37 +235,54 @@ MyAppConfig.get(:my_var) # Konfa will read the yaml file, populate the
 Initialize earlier:
 
 ```ruby
+# Read the yaml file and populate the configuration
+MyAppConfig.initialize!(:yaml, 'path_to_yaml_file')
 
-MyAppConfig.init_with(:yaml, 'path_to_yaml_file')
+# ... things happen, and later on in the execution:
 
-MyAppConfig.init # Konfa will now read the yaml file and populate the configuration
-                 # It's also possible to chain:
-                 #     MyAppConfig.init_with(:yaml, '...').init
-
-# ... things happens, and later on in the execution:
-
-MyAppConfig.get(:my_var)
+MyAppConfig.get(:my_var) # Konfa is already initialized and will just return the value of `my_var`
 ```
 
-From a design perspective, it is desireble to initialize Konfa as early as possible,
-as it will fail early if bad configuration values are found. Do not use this method
-unless there is a good reason to.
-
-You may override the ```init?``` method for implementing own logic on when to
+You may override the `initialized?` method for implementing your own logic on when to
 run the initialization code. This method is invoked at every time a value is
 accessed.
+
+## Multiple configuration files
+
+Konfa supports reading configuration from multiple files. Values are read and stored in the
+order the files were specified and in case conflicting keys are found, the last value is stored.
+
+```ruby
+# If the first file contained:
+#   my_var1: 'my_var1 from the 1st file'
+#   my_var2: 'my_var2 from the 1st file'
+# And the second:
+#   my_var1: 'my_var1 from the 2nd file'
+
+# Early initialization
+MyAppConfig.initialize!(:yaml, 'path_to_first_file', 'path_to_second_file')
+
+# or
+
+# Lazy initialization
+MyAppConfig.read_from(:yaml, 'path_to_first_file', 'path_to_second_file')
+
+# ... later in the execution
+MyAppConfig.dump # => { my_var1: 'my_var1 from the 2nd file', my_var2: my_var2 from the 1st file }
+```
+
+**NOTE:** `after_initialize` is invoked only once.
 
 ## Custom initialization methods
 
 If you want to initialize Konfa with values from another source (for example a
-database), you need to implement an initialization method. Extend the module
-`Konfa::Initializer::ClassMethods` with your own method and call `init_with`.
+database), you need to extend the module `Konfa::Initializer::ClassMethods` and
+implement an initialization method.
 
 ***NOTE:*** your initializer method name must be prefixed with: `init_with_` to
 avoid collisions in the configuration class.
 
 ```ruby
-
 module Konfa
   module Initializer
     module ClassMethods
@@ -284,7 +301,7 @@ class MyAppConfig < Konfa::Base
   end
 end
 
-MyAppConfig.init_with(:numbers) # Don't include prefix in symbol
+MyAppConfig.read_from(:numbers) # Don't include prefix in symbol
 
 MyAppConfig.get(:my_var) # => 01234
 ```
