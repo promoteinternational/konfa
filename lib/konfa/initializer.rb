@@ -7,17 +7,19 @@ module Konfa
     end
 
     module ClassMethods
-      def init_with_yaml(path)
-        # FIXME: It would be a lot cleaner if the YAML library would raise an
-        # exception if it fails to read the file. We'll handle it like this for now
-        # load_file just returns "false" if it fails
-        yaml_data = YAML.load_file(path)
+      def init_with_yaml(*paths)
+        paths.each do |path|
+          # FIXME: It would be a lot cleaner if the YAML library would raise an
+          # exception if it fails to read the file. We'll handle it like this for now
+          # load_file just returns "false" if it fails
+          yaml_data = YAML.load_file(path)
 
-        unless yaml_data.nil?
-          raise Konfa::InitializationError.new("Bad YAML format, key/value pairs expected") unless yaml_data.kind_of?(Hash)
+          unless yaml_data.nil?
+            raise Konfa::InitializationError.new("Bad YAML format, key/value pairs expected") unless yaml_data.kind_of?(Hash)
 
-          yaml_data.each do |variable, value|
-            self.store(variable, value)
+            yaml_data.each do |variable, value|
+              self.store(variable, value)
+            end
           end
         end
 
