@@ -140,18 +140,12 @@ module Konfa
         self
       end
 
-      def initialized!
-        unless self.initialized?
-          @initialized = true
-          self.after_initialize
-        end
+      def initialize!
+        raise AlreadyInitializedError if self.initialized?
 
+        @initialized = true
+        self.after_initialize
         self
-      end
-
-      def initialize!(initializer, *files)
-        self.read_from(initializer, *files)
-        self.initialized!
       end
 
       def initialized?
@@ -178,6 +172,7 @@ module Konfa
   end
 
   class UnsupportedInitializerError < StandardError; end
+  class AlreadyInitializedError < StandardError; end
   class UnsupportedVariableError < StandardError; end
   class NilVariableError < StandardError; end
 end

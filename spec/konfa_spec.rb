@@ -34,8 +34,8 @@ class MyOtherTestKonfa < Konfa::Base
 end
 
 describe Konfa do
-  let(:bool_file)  { File.expand_path('../support/bool_config.yaml', __FILE__) }
-  let(:good_file)  { File.expand_path('../support/good_config.yaml', __FILE__) }
+  let(:bool_file) { File.expand_path('../support/bool_config.yaml', __FILE__) }
+  let(:good_file) { File.expand_path('../support/good_config.yaml', __FILE__) }
   let(:initial_file) { File.expand_path('../support/initial_config.yaml', __FILE__) }
   let(:overrides_file) { File.expand_path('../support/overrides.yaml', __FILE__) }
 
@@ -437,63 +437,43 @@ describe Konfa do
     end
   end
 
-  describe '.initialized!' do
-    subject { MyTestKonfa.initialized! }
+  describe '.initialize!' do
+    it 'sets initialized state' do
+      MyTestKonfa.read_from(:yaml, good_file)
 
-    it 'sets initialized to true' do
       expect {
-        subject
+        MyTestKonfa.initialize!
       }.to change { MyTestKonfa.initialized? }.from(false).to(true)
     end
 
     it 'calls after_initialize' do
+      MyTestKonfa.read_from(:yaml, good_file)
+
       expect(MyTestKonfa).to receive(:after_initialize)
-      subject
+
+      MyTestKonfa.initialize!
     end
 
-    it 'returns self' do
-      expect(subject).to eq MyTestKonfa
-    end
+    it 'raises error when already initialized' do
+      MyTestKonfa.read_from(:yaml, initial_file).initialize!
 
-    context 'when already initialized' do
-      before(:each) { allow(MyTestKonfa).to receive(:initialized?).and_return(true) }
-
-      it 'does not run' do
-        expect(MyTestKonfa).not_to receive(:after_initialize)
-        expect(subject).to eq MyTestKonfa
-      end
+      expect {
+        MyTestKonfa.initialize!
+      }.to raise_error(Konfa::AlreadyInitializedError)
     end
   end
 
   describe '.initialized?' do
-    subject { MyTestKonfa }
+    it 'is true when initialized' do
+      MyTestKonfa.read_from(:yaml, good_file).initialize!
 
-    context 'when not initialized' do
-      it { is_expected.not_to be_initialized }
+      expect(MyTestKonfa).to be_initialized
     end
 
-    context 'when already initialized' do
-      before(:each) { MyTestKonfa.initialized! }
+    it 'is false when not initialized' do
+      MyTestKonfa.read_from(:yaml, good_file)
 
-      it { is_expected.to be_initialized }
-    end
-  end
-
-  describe '.initialize!' do
-    subject { MyTestKonfa.initialize!(:yaml, good_file) }
-
-    it 'loads the config and initializes' do
-      expect(MyTestKonfa).to receive(:read_from).with(:yaml, good_file)
-      expect(MyTestKonfa).to receive(:initialized!)
-
-      MyTestKonfa.initialize!(:yaml, good_file)
-    end
-
-    it 'accepts multiple files' do
-      expect(MyTestKonfa).to receive(:read_from).with(:yaml, initial_file, overrides_file).once
-      expect(MyTestKonfa).to receive(:initialized!).once
-
-      MyTestKonfa.initialize!(:yaml, initial_file, overrides_file)
+      expect(MyTestKonfa).not_to be_initialized
     end
   end
 end
