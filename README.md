@@ -288,3 +288,40 @@ MyAppConfig.init_with(:numbers) # Don't include prefix in symbol
 
 MyAppConfig.get(:my_var) # => 01234
 ```
+
+## Version 0.5.x
+
+Konfa 0.5 introduces new methods for initializing configurations, meant to provide
+a simpler interface and a cleaner way of using multiple YAML files and/or multiple
+initializers. Catching errors early is strongly encouraged, therefore,
+`initialize!` must be called explicitly when finished loading configurations.
+
+```ruby
+require 'konfa'
+
+class MyAppConfig < Konfa::Base
+  def self.allowed_variables
+    {
+      lasers: 'off',
+      tasers: 'on',
+    }
+  end
+
+  def self.env_variable_prefix
+    'MY_APP_'
+  end
+end
+
+MyAppConfig.read_from(:yaml, 'config/values.yaml', 'config/local_overrides.yaml' )
+MyAppConfig.read_from(:env)
+MyAppConfig.initialize! # after_initialize is invoked once
+
+if MyAppConfig.true?(:lasers)
+  # do stuff
+end
+```
+
+**NOTE¹:** when using `read_from`, accessing variables without initializing
+first will raise an exception in Konfa 1.0.  
+**NOTE²:** the old initialization interface is now deprecated and will be
+removed in Konfa 1.0.
