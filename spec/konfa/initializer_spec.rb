@@ -18,8 +18,15 @@ describe Konfa::Initializer do
   end
 
   context "#init_with_yaml" do
+    it 'dumps configuration' do
+      expect(subject).to receive(:dump)
+
+      subject.init_with_yaml(good_file)
+    end
+
     it 'calls store with data from yaml' do
       expect(subject).to receive(:store).with('my_var', 'read from the yaml file')
+
       subject.init_with_yaml(good_file)
     end
 
@@ -29,7 +36,7 @@ describe Konfa::Initializer do
       }.to raise_error(Konfa::InitializationError)
     end
 
-    it "raises an exception if file does not key/value pairs" do
+    it "raises an exception if file does not contain key/value pairs" do
       expect {
         subject.init_with_yaml(array_file)
       }.to raise_error(Konfa::InitializationError)
@@ -40,6 +47,18 @@ describe Konfa::Initializer do
       expect {
         subject.init_with_yaml(empty_file)
       }.not_to raise_error
+    end
+
+    it 'stores data from multiple files' do
+      initial_file = File.expand_path("../../support/initial_config.yaml", __FILE__)
+      overrides_file = File.expand_path("../../support/overrides.yaml", __FILE__)
+
+      expect(subject).to receive(:store).with('foo', 'foo')
+      expect(subject).to receive(:store).with('bar', 'bar')
+      expect(subject).to receive(:store).with('baz', 'baz')
+      expect(subject).to receive(:store).with('foo', 'overrides initial config foo var')
+
+      subject.init_with_yaml(initial_file, overrides_file)
     end
   end
 
