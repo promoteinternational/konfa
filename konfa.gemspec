@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Gunnar Hansson", "Avidity"]
   s.email       = 'code@avidiy.se'
   s.files       = Dir.glob("lib/**/*.rb")
-  s.homepage    = 'http://github.com/avidity/konfa'
+  s.homepage    = 'http://github.com/promoteinternational/konfa'
   s.license     = 'MIT'
 
   s.add_dependency "method_source", "~> 0.8"
