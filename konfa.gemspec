@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.required_ruby_version = '>= 1.9.3'
   s.name        = 'konfa'
-  s.version     = '0.4.3'
+  s.version     = '0.5.1'
   s.date        = '2017-06-15'
   s.summary     = "Application configuration"
   s.description = "Helps you avoid common pitfalls when dealing with app config"
