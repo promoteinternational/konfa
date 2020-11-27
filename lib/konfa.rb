@@ -36,7 +36,8 @@ module Konfa
       end
 
       def configuration
-        self.init
+        self.init if self.initializer
+
         @configuration ||= default_values
       end
 
