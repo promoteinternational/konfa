@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.homepage    = 'http://github.com/promoteinternational/konfa'
   s.license     = 'MIT'
 
-  s.add_dependency "method_source", "~> 0.8"
+  s.add_dependency "method_source", ">= 0.8", "<= 1.0"
   s.add_development_dependency "rake", "~> 12.0"
   s.add_development_dependency "rspec", "~> 3.6"
   s.add_development_dependency "ruby_dep", "~> 1.3.1"
